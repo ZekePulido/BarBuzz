@@ -1,3 +1,4 @@
+import 'package:barbuzz/pages/main_page.dart';
 import 'package:flutter/material.dart';
 import '../pages/sign_up_page.dart';
 import '../pages/home_page.dart';
@@ -146,7 +147,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => LocationsPage(),  // Replace with your target page
+                                      builder: (context) => MainPage(),  // Replace with your target page
                                     ),
                                   );
                                 }

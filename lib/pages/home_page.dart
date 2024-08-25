@@ -1,4 +1,4 @@
-import 'package:barbuzz/pages/calendar_page.dart';
+import 'package:barbuzz/pages/main_page.dart';
 import 'package:flutter/material.dart';
 import '../pages/log_in_page.dart';
 import '../pages/sign_up_page.dart';
@@ -82,7 +82,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CalendarPage(),  // Replace with your target page
+                      builder: (context) => MainPage(),  // Replace with your target page
                     ),
                   );
                 },
