@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../pages/sign_up_page.dart';
 import '../pages/home_page.dart';
 import '../pages/password_reset_page.dart';
-import '../pages/locations_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -147,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => MainPage(),  // Replace with your target page
+                                      builder: (context) => MainPage(selectedIndex: 1),  // Replace with your target page
                                     ),
                                   );
                                 }

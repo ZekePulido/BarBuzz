@@ -1,29 +1,43 @@
 import 'package:flutter/material.dart';
-import 'locations_page.dart'; // Import the LocationsPage widget
-import 'calendar_page.dart'; // Import the CalendarPage widget
-import 'profile_page.dart';  // Import the ProfilePage widget
+import 'locations_page.dart'; // Import LocationsPage widget
+import 'calendar_page.dart'; // Import CalendarPage widget
+import 'profile_page.dart';  // Import ProfilePage widget
 
 class MainPage extends StatefulWidget {
+  final int selectedIndex;
+
+  MainPage({required this.selectedIndex});
+
   @override
   _MainPageState createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedIndex = 1; // Set default to CalendarPage index (1)
-  PageController _pageController = PageController(initialPage: 1); // Set initialPage to CalendarPage index (1)
+  late PageController _pageController;
+  int _currentIndex = 0; // Track the current page index
 
-  void _onItemTapped(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.selectedIndex;
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  void _onPageChanged(int index) {
     setState(() {
-      _selectedIndex = index;
+      _currentIndex = index;
     });
-    _pageController.jumpToPage(index); // Navigate to the selected page
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+      _pageController.jumpToPage(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false, // Remove the back arrow
@@ -38,11 +52,7 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: Colors.black,
       body: PageView(
         controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onPageChanged: _onPageChanged,
         children: [
           LocationsPage(), // Use LocationsPage widget
           CalendarPage(),  // Use CalendarPage widget
@@ -51,10 +61,10 @@ class _MainPageState extends State<MainPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Color.fromARGB(100, 105, 105, 105),
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Color.fromARGB(150, 225, 71, 44),
-        unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        selectedItemColor: Color.fromARGB(150, 225, 71, 44), // Color for selected item
+        unselectedItemColor: Color.fromARGB(150, 192, 192, 192), // Color for unselected items
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.location_pin),

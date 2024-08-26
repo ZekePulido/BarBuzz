@@ -82,7 +82,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MainPage(),  // Replace with your target page
+                      builder: (context) => MainPage(selectedIndex: 1),  // Replace with your target page
                     ),
                   );
                 },

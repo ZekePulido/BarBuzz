@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/location_card.dart';
+import '../pages/bar_page.dart';
 
 class LocationsPage extends StatefulWidget {
   @override
@@ -7,6 +8,19 @@ class LocationsPage extends StatefulWidget {
 }
 
 class _LocationsPageState extends State<LocationsPage> {
+  void _navigateToBarPage(String imagePath, String title) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BarPage(
+          imagePath: imagePath,
+          title: title,
+        ),
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,11 +56,15 @@ class _LocationsPageState extends State<LocationsPage> {
               LocationCard(
                 imagePath: 'assets/logos/arepas.jpg',
                 title: "Arepas Coffee & Bar",
+                onTap: () => _navigateToBarPage('assets/logos/arepas.jpg', 'Arepas Coffee & Bar'),
+
               ),
               LocationCard(
                 imagePath: 'assets/logos/boardtown.jpg',
                 title: "BoardTown",
+                onTap: () => _navigateToBarPage('assets/logos/boardtown.jpg', 'BoardTown'),
               ),
+            
               // Add more LocationCard widgets here
             ],
           ),
