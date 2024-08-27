@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'main_page.dart'; // Import MainPage widget
-import 'locations_page.dart'; // Import LocationsPage widget
-import 'calendar_page.dart'; // Import CalendarPage widget
-import 'profile_page.dart';  // Import ProfilePage widget
 
 class BarPage extends StatefulWidget {
   final String imagePath;

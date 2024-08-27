@@ -10,8 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  table_calendar: ^3.0.0
   cupertino_icons: ^1.0.8
+  provider: ^6.0.0
+  image_picker: ^0.8.5+3
 
 dev_dependencies:
   flutter_test:

@@ -1,11 +1,80 @@
+import 'package:barbuzz/pages/apply_location_page.dart';
 import 'package:flutter/material.dart';
+import 'package:barbuzz/pages/sign_up_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Profile')),
-      body: Center(child: Text('Profile')),
+      backgroundColor: Colors.black,
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end, // Aligns content to the bottom
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SignUpPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+              ),
+              child: Text(
+                'SIGN UP',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.04, // Font size as 4% of screen width
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Text(
+              'Sign up for free to access rewards and additional features!',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: screenWidth * 0.045,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: screenHeight * 0.15),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ApplyLocationPage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+              ),
+              child: Text(
+                'APPLY MY LOCATION',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.04, // Font size as 4% of screen width
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            SizedBox(height: screenHeight * 0.02),
+          ],
+        ),
+      ),
     );
   }
 }

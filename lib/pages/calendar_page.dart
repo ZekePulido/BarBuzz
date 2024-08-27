@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../pages/full_calendar_page.dart'; // Import the FullCalendarPage
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -19,11 +20,20 @@ class _CalendarPageState extends State<CalendarPage> {
           crossAxisAlignment: CrossAxisAlignment.start, // Align items to the start (left)
           children: [
             Center(
-              child: Text(
-                "See full calendar",
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: screenWidth * 0.06,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => FullCalendarPage()),
+                  );
+                },
+                child: Text(
+                  "See full calendar",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: screenWidth * 0.06,
+                    decoration: TextDecoration.underline, // Optional: add underline to indicate it's clickable
+                  ),
                 ),
               ),
             ),
