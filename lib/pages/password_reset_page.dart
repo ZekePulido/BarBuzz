@@ -1,4 +1,3 @@
-import 'dart:io'; // Import Dart's IO library for File
 import 'package:barbuzz/pages/log_in_page.dart';
 import 'package:flutter/material.dart';
 
@@ -203,12 +202,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                             width: screenWidth * 0.5, // 50% of the screen width
                             child: ElevatedButton(
                               onPressed: () {
-                                  Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LoginPage(),  // Replace with your target page
-                                  ),
-                                  );
+                                  Navigator.pop(context);
                                 },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button

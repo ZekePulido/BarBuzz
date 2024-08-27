@@ -1,7 +1,5 @@
-import 'package:barbuzz/pages/main_page.dart';
+import 'package:barbuzz/pages/bar_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Import the image_picker package
-import 'dart:io';
 
 class ApplyLocationPage extends StatefulWidget {
   @override
@@ -19,17 +17,6 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
   final TextEditingController _venueNameController = TextEditingController();
   final TextEditingController _venueDescriptionController = TextEditingController();
   final TextEditingController _venueWebsiteController = TextEditingController();
-
-  XFile? _image; // Variable to store the selected image
-
-  final ImagePicker _picker = ImagePicker(); // Create an instance of ImagePicker
-
-  Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery); // Pick an image from the gallery
-    setState(() {
-      _image = pickedImage; // Update the state with the picked image
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -336,32 +323,6 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.01),
-                        // Image picker button
-                        ElevatedButton(
-                          onPressed: _pickImage,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
-                          ),
-                          child: Text(
-                            _image == null ? 'Pick Image' : 'Change Image',
-                            style: TextStyle(
-                              color: Colors.white, // Text color of the button
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        // Display picked image
-                        _image != null
-                            ? Image.file(
-                                File(_image!.path),
-                                width: screenWidth * 0.6,
-                                height: screenHeight * 0.3,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(),
-                        // Centered "Submit" Button
-                        SizedBox(height: screenHeight * 0.02),
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
@@ -369,8 +330,12 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
-                                  // Process data if form is valid
-                                  // Add navigation or form submission logic here
+                                  Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BarProfilePage(),  // Replace with your target page
+                                  ),
+                                );
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -392,12 +357,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                             width: screenWidth * 0.5, // 50% of the screen width
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MainPage(selectedIndex: 2,),  // Replace with your target page
-                                    ),
-                                );
+                               Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button

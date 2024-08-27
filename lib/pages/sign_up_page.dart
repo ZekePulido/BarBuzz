@@ -226,12 +226,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             child: ElevatedButton(
                               onPressed: () {
                                 // Navigate to another page when BACK button is pressed
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => HomePage(),  // Replace with your target page
-                                  ),
-                                );
+                               Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button

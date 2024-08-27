@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class PasswordResetPage extends StatelessWidget {
+class DefaultPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
