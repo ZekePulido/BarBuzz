@@ -1,3 +1,4 @@
+import 'package:barbuzz/pages/full_calendar_page.dart';
 import 'package:flutter/material.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CalendarPage()),
+                    MaterialPageRoute(builder: (context) => FullCalendarPage()),
                   );
                 },
                 child: Text(
