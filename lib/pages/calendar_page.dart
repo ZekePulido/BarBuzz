@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../pages/full_calendar_page.dart'; // Import the FullCalendarPage
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -24,7 +23,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FullCalendarPage()),
+                    MaterialPageRoute(builder: (context) => CalendarPage()),
                   );
                 },
                 child: Text(
