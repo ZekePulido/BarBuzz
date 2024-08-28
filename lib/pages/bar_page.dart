@@ -69,7 +69,7 @@ class _BarPageState extends State<BarPage> {
             ),
           );
         },
-        selectedItemColor: Color.fromARGB(150, 225, 71, 44),
+        selectedItemColor: Color.fromARGB(175, 168, 0, 0),
         unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
         items: [
           BottomNavigationBarItem(

@@ -31,7 +31,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   "See full calendar",
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: screenWidth * 0.06,
+                    fontSize: screenWidth * 0.04,
                     decoration: TextDecoration.underline, // Optional: add underline to indicate it's clickable
                   ),
                 ),

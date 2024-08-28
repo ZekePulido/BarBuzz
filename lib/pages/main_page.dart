@@ -63,7 +63,7 @@ class _MainPageState extends State<MainPage> {
         backgroundColor: Color.fromARGB(100, 105, 105, 105),
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Color.fromARGB(150, 225, 71, 44), // Color for selected item
+        selectedItemColor: Color.fromARGB(175, 168, 0, 0), // Color for selected item
         unselectedItemColor: Color.fromARGB(150, 192, 192, 192), // Color for unselected items
         items: [
           BottomNavigationBarItem(
