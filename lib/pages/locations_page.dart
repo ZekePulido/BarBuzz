@@ -1,6 +1,32 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../utils/location_card.dart';
 import '../pages/bar_page.dart';
+
+// Location model
+class Location {
+  final String id;
+  final String location;
+  final String image;
+  final String address;
+
+  Location({
+    required this.id,
+    required this.location,
+    required this.image,
+    required this.address,
+  });
+
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      id: json['_id'],
+      location: json['location'],
+      image: json['image'],
+      address: json['address'],
+    );
+  }
+}
 
 class LocationsPage extends StatefulWidget {
   @override
@@ -8,25 +34,49 @@ class LocationsPage extends StatefulWidget {
 }
 
 class _LocationsPageState extends State<LocationsPage> {
-  void _navigateToBarPage(String imagePath, String title) {
+  late Future<List<Location>> _locations;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _locations = fetchLocations();
+  }
+
+  Future<List<Location>> fetchLocations() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:3000/locations'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Location.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load locations');
+    }
+  }
+
+  void _navigateToBarPage(Location location) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => BarPage(
-          imagePath: imagePath,
-          title: title,
+          imagePath: location.image,
+          locationId: location.id,
+          locationName: location.location, // Pass the location name
         ),
       ),
     );
   }
 
+  void _onSearchQueryChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get screen size
     final screenSize = MediaQuery.of(context).size;
-
-    // Calculate search bar height as a percentage of screen height
-    final double searchBarHeight = screenSize.height * 0.07; 
+    final double searchBarHeight = screenSize.height * 0.07;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -36,13 +86,13 @@ class _LocationsPageState extends State<LocationsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search bar
               SizedBox(
-                height: searchBarHeight, // Set dynamic height based on screen size
+                height: searchBarHeight,
                 child: Container(
                   padding: EdgeInsets.all(4),
                   color: Colors.black,
                   child: TextField(
+                    onChanged: _onSearchQueryChanged,
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                       hintText: 'Search...',
@@ -61,18 +111,36 @@ class _LocationsPageState extends State<LocationsPage> {
               ),
               SizedBox(height: 16.0),
 
-              // Location cards
-              LocationCard(
-                imagePath: 'assets/logos/arepas.jpg',
-                title: "Arepas Coffee & Bar",
-                onTap: () => _navigateToBarPage('assets/logos/arepas.jpg', 'Arepas Coffee & Bar'),
+              // Fetch and display location cards
+              FutureBuilder<List<Location>>(
+                future: _locations,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No locations available.'));
+                  } else {
+                    final locations = snapshot.data!
+                        .where((location) => location.location
+                            .toLowerCase()
+                            .contains(_searchQuery.toLowerCase()))
+                        .toList();
+
+                    return Column(
+                      children: locations.map((location) {
+                        return LocationCard(
+                          imagePath: location.image,
+                          location: location.location,
+                          locationId: location.id,
+                          onTap: () => _navigateToBarPage(location), // Pass the whole location object
+                        );
+                      }).toList(),
+                    );
+                  }
+                },
               ),
-              LocationCard(
-                imagePath: 'assets/logos/boardtown.jpg',
-                title: "BoardTown",
-                onTap: () => _navigateToBarPage('assets/logos/boardtown.jpg', 'BoardTown'),
-              ),
-              // Add more LocationCard widgets here
             ],
           ),
         ),

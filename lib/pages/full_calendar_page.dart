@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:http/http.dart' as http;
 import 'package:barbuzz/pages/main_page.dart';
 
 // Event class definition
@@ -8,7 +10,41 @@ class Event {
   final String location;
   final DateTime time;
 
-  Event({required this.title, required this.location, required this.time});
+  Event({
+    required this.title,
+    required this.location,
+    required this.time,
+  });
+
+  factory Event.fromJson(Map<String, dynamic> json) {
+    return Event(
+      title: json['title'] ?? 'No Title',
+      location: json['location'] ?? 'No Location',
+      time: json['time'] != null
+          ? DateTime.parse(json['time'])
+          : DateTime.now(),
+    );
+  }
+}
+
+// API URL (Replace with your actual API URL)
+const String apiUrl = 'http://10.0.2.2:3000/events'; // Adjust URL as needed
+
+Future<List<Event>> fetchEvents() async {
+  try {
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = json.decode(response.body)['events'];
+      print('Fetched events: $jsonResponse'); // Debug output
+      return jsonResponse.map((eventJson) => Event.fromJson(eventJson)).toList();
+    } else {
+      throw Exception('Failed to load events');
+    }
+  } catch (error) {
+    print('Error fetching events: $error');
+    return [];
+  }
 }
 
 class FullCalendarPage extends StatefulWidget {
@@ -19,18 +55,34 @@ class FullCalendarPage extends StatefulWidget {
 class _FullCalendarPageState extends State<FullCalendarPage> {
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
+  Map<DateTime, List<Event>> _events = {};
 
-  // Sample event data with Event model
-  final Map<DateTime, List<Event>> _events = {
-    DateTime(2024, 8, 27): [
-      Event(title: 'Event 1', location: 'Location A', time: DateTime(2024, 8, 27, 10, 0)),
-      Event(title: 'Event 2', location: 'Location B', time: DateTime(2024, 8, 27, 14, 30)),
-    ],
-    DateTime(2024, 8, 28): [
-      Event(title: 'Event 3', location: 'Location C', time: DateTime(2024, 8, 28, 9, 0)),
-    ],
-    // Add more events here
-  };
+  @override
+  void initState() {
+    super.initState();
+    _fetchEvents();
+  }
+
+  Future<void> _fetchEvents() async {
+    try {
+      final events = await fetchEvents();
+      final Map<DateTime, List<Event>> eventsMap = {};
+
+      for (var event in events) {
+        final normalizedDate = DateTime(event.time.year, event.time.month, event.time.day);
+        if (!eventsMap.containsKey(normalizedDate)) {
+          eventsMap[normalizedDate] = [];
+        }
+        eventsMap[normalizedDate]!.add(event);
+      }
+
+      setState(() {
+        _events = eventsMap;
+      });
+    } catch (error) {
+      print('Failed to fetch events: $error');
+    }
+  }
 
   List<Event> get _selectedDayEvents {
     final normalizedDate = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
@@ -54,93 +106,102 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         title: Center(
           child: Image.asset(
             'assets/logos/BarBuzz.png',
-            height: 80,
+            height: 60,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _fetchEvents,
+          ),
+        ],
       ),
       body: Column(
         children: [
-          Expanded(
-            flex: 3,
-            child: TableCalendar(
-              locale: 'en_US',
-              rowHeight: 43,
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-              onDaySelected: _onDaySelected,
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: TextStyle(color: Colors.white),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
-                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
-              ),
-              calendarStyle: CalendarStyle(
-                selectedDecoration: BoxDecoration(
-                  color: Color.fromARGB(150, 225, 71, 44),
-                  shape: BoxShape.circle,
+          Flexible(
+            flex: 4,
+            child: Container(
+              padding: EdgeInsets.all(8.0),
+              child: TableCalendar(
+                locale: 'en_US',
+                rowHeight: 43,
+                focusedDay: _focusedDay,
+                selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+                onDaySelected: _onDaySelected,
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: TextStyle(color: Colors.white),
+                  leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                  rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
                 ),
-                todayDecoration: BoxDecoration(
-                  color: Color.fromARGB(150, 33, 150, 243),
-                  shape: BoxShape.circle,
+                calendarStyle: CalendarStyle(
+                  selectedDecoration: BoxDecoration(
+                    color: Color.fromARGB(150, 225, 71, 44),
+                    shape: BoxShape.circle,
+                  ),
+                  todayDecoration: BoxDecoration(
+                    color: Color.fromARGB(150, 33, 150, 243),
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: TextStyle(color: Colors.white),
+                  selectedTextStyle: TextStyle(color: Colors.white),
+                  weekendTextStyle: TextStyle(color: Colors.red),
+                  defaultTextStyle: TextStyle(color: Colors.white),
+                  outsideTextStyle: TextStyle(color: Colors.grey),
                 ),
-                todayTextStyle: TextStyle(color: Colors.white),
-                selectedTextStyle: TextStyle(color: Colors.white),
-                weekendTextStyle: TextStyle(color: Colors.red),
-                defaultTextStyle: TextStyle(color: Colors.white),
-                outsideTextStyle: TextStyle(color: Colors.grey),
-              ),
-              calendarBuilders: CalendarBuilders(
-                markerBuilder: (context, date, events) {
-                  final normalizedDate = DateTime(date.year, date.month, date.day);
-                  final hasEvents = _events.containsKey(normalizedDate);
-
-                  if (hasEvents) {
-                    return Positioned(
-                      bottom: 1,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(
-                          _events[normalizedDate]!.length,
-                          (index) => Container(
-                            margin: EdgeInsets.symmetric(horizontal: 1),
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
+                calendarBuilders: CalendarBuilders(
+                  markerBuilder: (context, date, events) {
+                    final normalizedDate = DateTime(date.year, date.month, date.day);
+                    final hasEvents = _events.containsKey(normalizedDate);
+                    
+                    if (hasEvents) {
+                      return Positioned(
+                        bottom: 1,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(
+                            _events[normalizedDate]!.length,
+                            (index) => Container(
+                              margin: EdgeInsets.symmetric(horizontal: 1),
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }
-                  return SizedBox.shrink();
-                },
+                      );
+                    }
+                    return SizedBox.shrink();
+                  },
+                ),
+                firstDay: DateTime.utc(2010, 10, 16),
+                lastDay: DateTime.utc(2030, 3, 14),
+                availableGestures: AvailableGestures.all,
               ),
-              firstDay: DateTime.utc(2010, 10, 16),
-              lastDay: DateTime.utc(2030, 3, 14),
-              availableGestures: AvailableGestures.all,
             ),
           ),
-          Expanded(
+          Flexible(
             flex: 2,
             child: _selectedDayEvents.isNotEmpty
-                ? SingleChildScrollView(
-                    child: Column(
-                      children: _selectedDayEvents.map((event) {
-                        return ListTile(
-                          title: Text(
-                            event.title,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                ? ListView.builder(
+                    itemCount: _selectedDayEvents.length,
+                    itemBuilder: (context, index) {
+                      final event = _selectedDayEvents[index];
+                      return ListTile(
+                        title: Text(
+                          event.title,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        subtitle: Text(
+                          '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      );
+                    },
                   )
                 : Center(
                     child: Text(
@@ -181,4 +242,10 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
       ),
     );
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: FullCalendarPage(),
+  ));
 }

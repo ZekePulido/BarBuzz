@@ -1,7 +1,10 @@
-import 'package:barbuzz/pages/main_page.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../pages/main_page.dart';
 import '../pages/sign_up_page.dart';
 import '../pages/password_reset_page.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -9,43 +12,83 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>(); 
-
-  // Controllers for each field
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
+
+  Future<void> _login() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/login'), // Use appropriate IP for emulator or device
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'username': username,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final token = data['token'];
+
+        await _storage.write(key: 'auth_token', value: token);
+
+        // Navigate to the main page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainPage(selectedIndex: 1),
+          ),
+        );
+      } else {
+        // Show error message
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'])),
+        );
+      }
+    } catch (e) {
+      // Handle network errors or JSON parsing errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred. Please try again.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Obtain screen size
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
+        padding: EdgeInsets.all(screenWidth * 0.05),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: screenWidth * 0.8), // Constrain max width to 80% of screen width
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.8),
             child: Form(
-              key: _formKey, // Assign the form key here
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Centered "BARBUZZ" Text
                   Text(
                     "BARBUZZ",
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: screenWidth * 0.10, // Font size as 10% of screen width
+                      fontSize: screenWidth * 0.10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                  
+                  SizedBox(height: screenHeight * 0.02),
                   Container(
-                    padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
+                    padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
                       color: Color.fromARGB(175, 114, 0, 0),
                       borderRadius: BorderRadius.circular(12),
@@ -53,34 +96,32 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Centered "Sign Up" Text
                         Align(
                           alignment: Alignment.center,
                           child: Text(
                             'Login',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: screenWidth * 0.06, // Font size as 6% of screen width
+                              fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                        // Username Label and TextFormField
+                        SizedBox(height: screenHeight * 0.02),
                         Text(
                           'Username',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04, // Font size as 4% of screen width
+                            fontSize: screenWidth * 0.04,
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.01), // Space between label and text field as 1% of screen height
+                        SizedBox(height: screenHeight * 0.01),
                         TextFormField(
                           controller: _usernameController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
@@ -88,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                             hintText: 'Enter username...',
                             hintStyle: TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04, // Horizontal padding as 4% of screen width
+                              horizontal: screenWidth * 0.04,
                             ),
                           ),
                           validator: (value) {
@@ -98,8 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                        // Password Label and TextFormField
+                        SizedBox(height: screenHeight * 0.02),
                         Text(
                           'Password',
                           style: TextStyle(
@@ -112,8 +152,8 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
@@ -133,30 +173,23 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         SizedBox(height: screenHeight * 0.02),
-                        // Centered "SIGN UP" Button
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
-                            width: screenWidth * 0.5, // 50% of the screen width
+                            width: screenWidth * 0.5,
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
-                                  // Process data if form is valid
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MainPage(selectedIndex: 1),  // Replace with your target page
-                                    ),
-                                  );
+                                  _login();
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
                               ),
                               child: const Text(
                                 'Login',
                                 style: TextStyle(
-                                  color: Colors.white, // Text color of the button
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -167,18 +200,17 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () {
-                              // Navigate to login page or any other action
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PasswordResetPage(),  // Replace with your target page
+                                  builder: (context) => PasswordResetPage(),
                                 ),
                               );
                             },
                             child: Text(
                               'FORGOT PASSWORD?',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.03, // Font size as 3% of screen width
+                                fontSize: screenWidth * 0.03,
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),
@@ -190,18 +222,17 @@ class _LoginPageState extends State<LoginPage> {
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () {
-                              // Navigate to login page or any other action
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SignUpPage(),  // Replace with your target page
+                                  builder: (context) => SignUpPage(),
                                 ),
                               );
                             },
                             child: Text(
                               'SIGN UP',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.03, // Font size as 3% of screen width
+                                fontSize: screenWidth * 0.03,
                                 color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),
@@ -212,27 +243,26 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
-                            width: screenWidth * 0.4, // 40% of the screen width
+                            width: screenWidth * 0.4,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Navigate to another page when BACK button is pressed
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center, // Center the content horizontally
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.arrow_back,
-                                    color: Colors.white, // Color of the icon
+                                    color: Colors.white,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'BACK',
                                     style: TextStyle(
-                                      color: Colors.white, // Text color of the button
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],

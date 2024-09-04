@@ -1,4 +1,6 @@
+import 'package:barbuzz/pages/user_profile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'locations_page.dart'; // Import LocationsPage widget
 import 'calendar_page.dart'; // Import CalendarPage widget
 import 'profile_page.dart';  // Import ProfilePage widget
@@ -14,6 +16,8 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late PageController _pageController;
+  bool _loggedIn = false;
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
   int _currentIndex = 0; // Track the current page index
 
   @override
@@ -21,6 +25,14 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _currentIndex = widget.selectedIndex;
     _pageController = PageController(initialPage: _currentIndex);
+    _checkLoginStatus();
+  }
+
+  void _checkLoginStatus() async {
+    final token = await _storage.read(key: 'auth_token');
+    setState(() {
+      _loggedIn = token != null; // Update the state based on token presence
+    });
   }
 
   void _onPageChanged(int index) {
@@ -56,7 +68,7 @@ class _MainPageState extends State<MainPage> {
         children: [
           LocationsPage(), // Use LocationsPage widget
           CalendarPage(),  // Use CalendarPage widget
-          ProfilePage(),   // Use ProfilePage widget
+          _loggedIn ? UserProfilePage() : ProfilePage(), // Conditional page based on login status
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
