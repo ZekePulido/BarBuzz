@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'full_calendar_page.dart'; // Import FullCalendarPage if needed
 
-// Event class definition (copy this from full_calendar_page.dart if it's not in a separate file)
 class Event {
   final String title;
   final String location;
@@ -26,7 +25,6 @@ class Event {
   }
 }
 
-// API URL (Replace with your actual API URL)
 const String apiUrl = 'http://10.0.2.2:3000/events'; // Adjust URL as needed
 
 Future<List<Event>> fetchEvents() async {
@@ -89,103 +87,143 @@ class _CalendarPageState extends State<CalendarPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.03), // Add some padding to the edges
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Align items to the start (left)
-          children: [
-            Center(
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => FullCalendarPage()),
-                  );
-                },
-                child: Text(
-                  "See full calendar",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: screenWidth * 0.04,
-                    decoration: TextDecoration.underline, // Optional: add underline to indicate it's clickable
-                  ),
-                ),
-              ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        title: Padding(
+          padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on the left
+          child: Center(
+            child: Image.asset(
+              'assets/logos/BarBuzz.png',
+              height: 80,
             ),
-            SizedBox(height: screenHeight * 0.01), // Reduced space
-            Text(
-              "Today's Deals:",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.01), // Reduced space
-            Expanded(
-              child: _todayEvents.isNotEmpty
-                  ? ListView.builder(
-                      itemCount: _todayEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = _todayEvents[index];
-                        return ListTile(
-                          title: Text(
-                            event.title,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Text(
-                        'No events for today',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-            ),
-            SizedBox(height: screenHeight * 0.02), // Reduced space between the lists
-            Text(
-              "Tomorrow's Deals:",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.01), // Reduced space
-            Expanded(
-              child: _tomorrowEvents.isNotEmpty
-                  ? ListView.builder(
-                      itemCount: _tomorrowEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = _tomorrowEvents[index];
-                        return ListTile(
-                          title: Text(
-                            event.title,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          subtitle: Text(
-                            '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Text(
-                        'No events for tomorrow',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-            ),
-          ],
+          ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_month),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FullCalendarPage()),
+              );
+            },
+            color: Colors.white,
+          ),
+        ],
       ),
+      backgroundColor: Colors.black,
+      body: Column(
+        children: [
+          // Navigation bar below the AppBar
+          Container(
+            color: Colors.black,
+            padding: EdgeInsets.symmetric(vertical: 8), // Add vertical padding
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildNavItem(Icons.local_offer, "All Deals"),
+                _buildNavItem(Icons.local_drink, "Drinks"),
+                _buildNavItem(Icons.fastfood, "Food"),
+                _buildNavItem(Icons.music_note, "Events"),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.all(screenWidth * 0.03),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's Deals:",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Expanded(
+                    child: _todayEvents.isNotEmpty
+                        ? ListView.builder(
+                            itemCount: _todayEvents.length,
+                            itemBuilder: (context, index) {
+                              final event = _todayEvents[index];
+                              return ListTile(
+                                title: Text(
+                                  event.title,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                subtitle: Text(
+                                  '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Text(
+                              'No events for today',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  Text(
+                    "Tomorrow's Deals:",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Expanded(
+                    child: _tomorrowEvents.isNotEmpty
+                        ? ListView.builder(
+                            itemCount: _tomorrowEvents.length,
+                            itemBuilder: (context, index) {
+                              final event = _tomorrowEvents[index];
+                              return ListTile(
+                                title: Text(
+                                  event.title,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                subtitle: Text(
+                                  '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Text(
+                              'No events for tomorrow',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: Colors.grey),
+        SizedBox(height: 2), // Add spacing between icon and label
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey),
+        ),
+      ],
     );
   }
 }

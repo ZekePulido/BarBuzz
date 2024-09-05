@@ -30,7 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
               ),
               child: Text(
                 'SIGN UP',
@@ -60,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
               ),
               child: Text(
                 'APPLY MY LOCATION',
