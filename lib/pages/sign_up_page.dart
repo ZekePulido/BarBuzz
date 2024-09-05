@@ -74,7 +74,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(175, 114, 0, 0),
+                      color: Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -200,7 +200,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
+                                backgroundColor: Colors.black,
                               ),
                               child: const Text(
                                 'SIGN UP',
@@ -227,7 +227,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               'ALREADY HAVE AN ACCOUNT?',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.03,
-                                color: Colors.grey,
+                                color: Colors.white,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -243,7 +243,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
+                                backgroundColor: Colors.black,
                               ),
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

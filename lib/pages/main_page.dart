@@ -42,25 +42,35 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-      _pageController.jumpToPage(index);
-    });
+    if (index == 1) {
+      // Reset the CalendarPage if the Calendar tab is tapped
+      setState(() {
+        _pageController.jumpToPage(index);
+        _pageController = PageController(initialPage: index); // Recreate PageController
+      });
+    } else {
+      setState(() {
+        _currentIndex = index;
+        _pageController.jumpToPage(index);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // Remove the back arrow
-        backgroundColor: Color.fromARGB(175, 168, 0, 0),
-        title: Center(
-          child: Image.asset(
-            'assets/logos/BarBuzz.png',
-            height: 80,
-          ),
-        ),
-      ),
+      appBar: _currentIndex == 1 // Only show AppBar for CalendarPage
+          ? null
+          : AppBar(
+              automaticallyImplyLeading: false, // Remove the back arrow
+              backgroundColor: Color.fromARGB(220, 255, 179, 0),
+              title: Center(
+                child: Image.asset(
+                  'assets/logos/BarBuzz.png',
+                  height: 80,
+                ),
+              ),
+            ),
       backgroundColor: Colors.black,
       body: PageView(
         controller: _pageController,
@@ -75,7 +85,7 @@ class _MainPageState extends State<MainPage> {
         backgroundColor: Color.fromARGB(100, 105, 105, 105),
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Color.fromARGB(175, 168, 0, 0), // Color for selected item
+        selectedItemColor: Color.fromARGB(220, 255, 179, 0), // Color for selected item
         unselectedItemColor: Color.fromARGB(150, 192, 192, 192), // Color for unselected items
         items: [
           BottomNavigationBarItem(

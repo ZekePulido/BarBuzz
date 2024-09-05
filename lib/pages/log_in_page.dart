@@ -90,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(175, 114, 0, 0),
+                      color: Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -184,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
+                                backgroundColor: Colors.black,
                               ),
                               child: const Text(
                                 'Login',
@@ -249,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
+                                backgroundColor: Colors.black,
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

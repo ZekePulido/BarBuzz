@@ -120,7 +120,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             child: ElevatedButton(
               onPressed: _logout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
                 padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02, horizontal: screenWidth * 0.1),
               ),
               child: Row(

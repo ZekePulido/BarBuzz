@@ -98,21 +98,28 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtain screen size
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(175, 168, 0, 0),
-        title: Center(
-          child: Image.asset(
-            'assets/logos/BarBuzz.png',
-            height: 60,
+        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        title: Padding(
+          padding: EdgeInsets.only(left: screenWidth * 0.15), // 10% padding on each side
+          child: Center(
+            child: Image.asset(
+              'assets/logos/BarBuzz.png',
+              height: 80,
+            ),
           ),
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _fetchEvents,
+            color: Colors.white,
           ),
         ],
       ),
@@ -137,7 +144,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                 ),
                 calendarStyle: CalendarStyle(
                   selectedDecoration: BoxDecoration(
-                    color: Color.fromARGB(150, 225, 71, 44),
+                    color: Color.fromARGB(220, 255, 179, 0),
                     shape: BoxShape.circle,
                   ),
                   todayDecoration: BoxDecoration(
@@ -146,7 +153,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                   ),
                   todayTextStyle: TextStyle(color: Colors.white),
                   selectedTextStyle: TextStyle(color: Colors.white),
-                  weekendTextStyle: TextStyle(color: Colors.red),
+                  weekendTextStyle: TextStyle(color: Color.fromARGB(220, 255, 179, 0)),
                   defaultTextStyle: TextStyle(color: Colors.white),
                   outsideTextStyle: TextStyle(color: Colors.grey),
                 ),
@@ -167,7 +174,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                               width: 4,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: Color.fromARGB(220, 255, 179, 0),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -223,7 +230,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
             ),
           );
         },
-        selectedItemColor: Color.fromARGB(175, 168, 0, 0),
+        selectedItemColor: Color.fromARGB(220, 255, 179, 0),
         unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
         items: [
           BottomNavigationBarItem(

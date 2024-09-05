@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'main_page.dart'; // Import MainPage widget
 
@@ -20,11 +21,14 @@ class BarPage extends StatefulWidget {
 
 class _BarPageState extends State<BarPage> {
   late Future<Map<String, dynamic>> _locationDetails;
+  bool _isFavorited = false;
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
     _locationDetails = fetchLocationDetails(widget.locationId);
+    _checkFavoriteStatus();
   }
 
   Future<Map<String, dynamic>> fetchLocationDetails(String locationId) async {
@@ -37,18 +41,80 @@ class _BarPageState extends State<BarPage> {
     }
   }
 
+  Future<void> _checkFavoriteStatus() async {
+    try {
+      final token = await _storage.read(key: 'auth_token');
+      if (token == null) return;
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/favorites'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _isFavorited = data['favorites'].any((fav) => fav['_id'] == widget.locationId);
+        });
+      }
+    } catch (e) {
+      print('Error fetching favorite status: $e');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      final token = await _storage.read(key: 'auth_token');
+      if (token == null) return;
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/favorites'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'locationId': widget.locationId}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _isFavorited = !_isFavorited;
+        });
+      } else {
+        print('Failed to update favorites: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(175, 168, 0, 0),
-        title: Center(
-          child: Image.asset(
-            'assets/logos/BarBuzz.png',
-            height: 80,
+        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        title: Padding(
+          padding: EdgeInsets.only(left: screenWidth * 0.005), // 10% padding on each side
+          child: Center(
+            child: Image.asset(
+              'assets/logos/BarBuzz.png',
+              height: 80,
+            ),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isFavorited ? Icons.favorite : Icons.favorite_border,
+              color: _isFavorited ? Colors.red : Colors.white,
+            ),
+            onPressed: _toggleFavorite,
+          ),
+        ],
       ),
       backgroundColor: Colors.black,
       body: Padding(
@@ -67,16 +133,13 @@ class _BarPageState extends State<BarPage> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Title centered
                   Center(
                     child: Text(
                       widget.locationName, // Use locationName passed from LocationsPage
                       style: TextStyle(fontSize: 24, color: Colors.white),
                     ),
                   ),
-                  SizedBox(height: 16), // Spacing between title and image
-
-                  // Circular Image centered
+                  SizedBox(height: 16),
                   Center(
                     child: ClipOval(
                       child: Image.network(
@@ -87,9 +150,7 @@ class _BarPageState extends State<BarPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16), // Spacing between image and address
-
-                  // Address (aligned to the start)
+                  SizedBox(height: 16),
                   Text(
                     "Address: ${location['address']}",
                     style: TextStyle(fontSize: 18, color: Colors.white),
@@ -102,7 +163,7 @@ class _BarPageState extends State<BarPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Color.fromARGB(100, 105, 105, 105),
-        currentIndex: 0, // You can set this based on navigation history if needed
+        currentIndex: 0,
         onTap: (index) {
           Navigator.pushReplacement(
             context,
@@ -111,7 +172,7 @@ class _BarPageState extends State<BarPage> {
             ),
           );
         },
-        selectedItemColor: Color.fromARGB(175, 168, 0, 0),
+        selectedItemColor: Color.fromARGB(220, 255, 179, 0),
         unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
         items: [
           BottomNavigationBarItem(

@@ -7,7 +7,6 @@ class BarProfilePage extends StatefulWidget {
 }
 
 class _BarProfilePageState extends State<BarProfilePage> {
-  static const Color _appBarColor = Color.fromARGB(175, 168, 0, 0);
   static const Color _textColor = Colors.white;
 
   @override
@@ -19,7 +18,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: _appBarColor,
+        backgroundColor: Color.fromARGB(220, 255, 179, 0),
         title: Center(
           child: Image.asset(
             'assets/logos/BarBuzz.png',
@@ -85,7 +84,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _appBarColor,
+                backgroundColor: Color.fromARGB(220, 255, 179, 0),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -112,7 +111,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
                 // Handle continue to payment action
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _appBarColor,
+                backgroundColor: Color.fromARGB(220, 255, 179, 0),
               ),
               child: Text(
                 'CONTINUE TO PAYMENT',

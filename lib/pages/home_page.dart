@@ -1,3 +1,4 @@
+import 'package:barbuzz/pages/apply_location_page.dart';
 import 'package:barbuzz/pages/main_page.dart';
 import 'package:flutter/material.dart';
 import '../pages/log_in_page.dart';
@@ -19,61 +20,74 @@ class HomePage extends StatelessWidget {
           children: [
             Image.asset(
               'assets/logos/BarBee.png',
-              width: screenWidth * 0.6,
-              height: screenHeight * 0.4,
+              width: screenWidth * 0.8,
+              height: screenHeight * 0.5,
               fit: BoxFit.cover,
             ),
             const SizedBox(height: 20),
 
-            SizedBox(
-              width: screenWidth * 0.5,  // 50% of the screen width
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to another page when SIGN UP button is pressed
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SignUpPage(),  // Replace with your target page
+            // Button Row with spacing
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,  // Center buttons horizontally
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),  // Space around buttons
+                  child: SizedBox(
+                    width: screenWidth * 0.4,  // 40% of the screen width
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to SignUpPage when SIGN UP button is pressed
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SignUpPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                      ),
+                      child: const Text(
+                        'SIGN UP',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(175, 168, 0, 0),  // Background color of the button
-                ),
-                child: const Text(
-                  'SIGN UP',
-                  style: TextStyle(
-                    color: Colors.white,  // Text color of the button
                   ),
                 ),
-              ),
-            ),
-
-            // Label
-            Padding(
-              padding: EdgeInsets.only(bottom: 15),
-              child: GestureDetector(
-                onTap: () {
-                  // Navigate to login page or any other action
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoginPage(),  // Replace with your target page
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),  // Space around buttons
+                  child: SizedBox(
+                    width: screenWidth * 0.4,  // 40% of the screen width
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to LoginPage when LOG IN button is pressed
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LoginPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                      ),
+                      child: const Text(
+                        'LOG IN',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  );
-                },
-                child: Text(
-                  'ALREADY HAVE AN ACCOUNT?',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,  // Text color of the label
-                    decoration: TextDecoration.underline,  // Optional: underline the text to indicate it's clickable
                   ),
                 ),
-              ),
+              ],
             ),
 
-            // Bottom Button with more width
+            SizedBox(height: screenHeight * 0.02),
+
+            // SKIP Button
             SizedBox(
               width: screenWidth * 0.4,  // 40% of the screen width
               child: ElevatedButton(
@@ -82,28 +96,56 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MainPage(selectedIndex: 1),  // Replace with your target page
+                      builder: (context) => MainPage(selectedIndex: 1),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(175, 168, 0, 0),  // Background color of the button
+                  backgroundColor: Color.fromARGB(220, 255, 179, 0),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center, // Center the content horizontally
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.arrow_forward_ios,
-                      color: Colors.white, // Color of the icon
+                      color: Colors.black,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'SKIP',
                       style: TextStyle(
-                        color: Colors.white,  // Text color of the button
+                        color: Colors.black,
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: screenHeight * 0.08 ),
+
+            // Apply My Business Button
+            SizedBox(
+              width: screenWidth * 0.6,  // 40% of the screen width
+              child: ElevatedButton(
+                onPressed: () {
+                  // Navigate to another page or perform an action when APPLY MY BUSINESS button is pressed
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ApplyLocationPage(), // Adjust as necessary
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                ),
+                child: Text(
+                  'APPLY MY BUSINESS',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                  softWrap: true, // Allow text to wrap
                 ),
               ),
             ),
