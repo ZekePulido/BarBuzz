@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:barbuzz/pages/log_in_page.dart'; // Ensure this import is correct
 
 class UserProfilePage extends StatefulWidget {
@@ -7,6 +10,59 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
+  String _username = 'Loading...';
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
+
+  Future<void> _fetchUserProfile() async {
+    try {
+      final token = await _storage.read(key: 'auth_token');
+      if (token == null) {
+        setState(() {
+          _username = 'Not logged in';
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _username = data['username'];
+        });
+      } else {
+        setState(() {
+          _username = 'Failed to load profile';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _username = 'Error fetching profile';
+      });
+    }
+  }
+
+  Future<void> _logout() async{
+    await _storage.delete(key: 'auth_token');
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(), // Navigate back to login page
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -22,7 +78,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             child: Padding(
               padding: EdgeInsets.all(screenWidth * 0.05), // Padding from the edges
               child: Text(
-                'Welcome, User!',
+                'Welcome, $_username!',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.06,
@@ -58,18 +114,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
             ),
           ),
-          // Login button
+          // Logout button
           Padding(
             padding: EdgeInsets.all(screenWidth * 0.05), // Padding around the button
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LoginPage(), // Replace with your target page
-                  ),
-                );
-              },
+              onPressed: _logout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
                 padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02, horizontal: screenWidth * 0.1),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../pages/log_in_page.dart';
-import '../pages/home_page.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -8,44 +9,70 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final _formKey = GlobalKey<FormState>(); // Key for form validation
-
-  // Controllers for each field
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nicknameController = TextEditingController();
 
+  Future<void> _signUp() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+    final nickname = _nicknameController.text;
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:3000/signup'), // Use your backend URL here
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+        'nickname': nickname,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoginPage(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to sign up: ${jsonDecode(response.body)['error']}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Obtain screen size
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
+        padding: EdgeInsets.all(screenWidth * 0.05),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: screenWidth * 0.8), // Constrain max width to 80% of screen width
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.8),
             child: Form(
-              key: _formKey, // Assign the form key here
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Centered "BARBUZZ" Text
                   Text(
                     "BARBUZZ",
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: screenWidth * 0.10, // Font size as 10% of screen width
+                      fontSize: screenWidth * 0.10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                  
+                  SizedBox(height: screenHeight * 0.02),
                   Container(
-                    padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
+                    padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
                       color: Color.fromARGB(175, 114, 0, 0),
                       borderRadius: BorderRadius.circular(12),
@@ -53,34 +80,32 @@ class _SignUpPageState extends State<SignUpPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Centered "Sign Up" Text
                         Align(
                           alignment: Alignment.center,
                           child: Text(
                             'Sign Up',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: screenWidth * 0.06, // Font size as 6% of screen width
+                              fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                        // Username Label and TextFormField
+                        SizedBox(height: screenHeight * 0.02),
                         Text(
                           'Username',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04, // Font size as 4% of screen width
+                            fontSize: screenWidth * 0.04,
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.01), // Space between label and text field as 1% of screen height
+                        SizedBox(height: screenHeight * 0.01),
                         TextFormField(
                           controller: _usernameController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
@@ -88,7 +113,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             hintText: 'Enter username...',
                             hintStyle: TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04, // Horizontal padding as 4% of screen width
+                              horizontal: screenWidth * 0.04,
                             ),
                           ),
                           validator: (value) {
@@ -98,8 +123,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                        // Password Label and TextFormField
+                        SizedBox(height: screenHeight * 0.02),
                         Text(
                           'Password',
                           style: TextStyle(
@@ -112,8 +136,8 @@ class _SignUpPageState extends State<SignUpPage> {
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
@@ -133,7 +157,6 @@ class _SignUpPageState extends State<SignUpPage> {
                           },
                         ),
                         SizedBox(height: screenHeight * 0.02),
-                        // Nickname Label and TextFormField
                         Text(
                           'Nickname',
                           style: TextStyle(
@@ -146,8 +169,8 @@ class _SignUpPageState extends State<SignUpPage> {
                         TextFormField(
                           controller: _nicknameController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
@@ -166,30 +189,23 @@ class _SignUpPageState extends State<SignUpPage> {
                           },
                         ),
                         SizedBox(height: screenHeight * 0.02),
-                        // Centered "SIGN UP" Button
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
-                            width: screenWidth * 0.5, // 50% of the screen width
+                            width: screenWidth * 0.5,
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
-                                  // Process data if form is valid
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => HomePage(),  // Replace with your target page
-                                    ),
-                                  );
+                                  _signUp();  // Call the sign-up method
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
                               ),
                               child: const Text(
                                 'SIGN UP',
                                 style: TextStyle(
-                                  color: Colors.white, // Text color of the button
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
@@ -200,18 +216,17 @@ class _SignUpPageState extends State<SignUpPage> {
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () {
-                              // Navigate to login page or any other action
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => LoginPage(),  // Replace with your target page
+                                  builder: (context) => LoginPage(),
                                 ),
                               );
                             },
                             child: Text(
                               'ALREADY HAVE AN ACCOUNT?',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.03, // Font size as 3% of screen width
+                                fontSize: screenWidth * 0.03,
                                 color: Colors.grey,
                                 decoration: TextDecoration.underline,
                               ),
@@ -222,27 +237,26 @@ class _SignUpPageState extends State<SignUpPage> {
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
-                            width: screenWidth * 0.4, // 40% of the screen width
+                            width: screenWidth * 0.4,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Navigate to another page when BACK button is pressed
-                               Navigator.pop(context);
+                                Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Color.fromARGB(175, 168, 0, 0),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center, // Center the content horizontally
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.arrow_back,
-                                    color: Colors.white, // Color of the icon
+                                    color: Colors.white,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'BACK',
                                     style: TextStyle(
-                                      color: Colors.white, // Text color of the button
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
