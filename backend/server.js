@@ -32,18 +32,22 @@ const userSchema = new mongoose.Schema({
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
 });
 
-
 const eventSchema = new mongoose.Schema({
   title: String,
-  location: String,
-  time: Date,
+  location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' },
+  locationName: String, // Ensure this field is present
+  startTime: Date,
+  endTime: Date,
 });
+
 
 const locationSchema = new mongoose.Schema({
   location: String,
   image: String, // Path to the image
   address: String,
+  description: String, // Add description field
 });
+
 
 const User = mongoose.model('User', userSchema);
 const Event = mongoose.model('Event', eventSchema);
@@ -166,17 +170,32 @@ app.get('/favorites', authenticateToken, async (req, res) => {
 
 
 
-// Route to create an event
 app.post('/events', async (req, res) => {
-  const { title, location, time } = req.body;
+  const { title, location, startTime, endTime } = req.body;
+
   try {
-    const event = new Event({ title, location, time });
+    // Find the location to get the name
+    const loc = await Location.findById(location);
+    if (!loc) {
+      return res.status(404).send({ error: 'Location not found' });
+    }
+
+    const event = new Event({
+      title,
+      location,
+      locationName: loc.location, // Save the location name
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+    });
+
     await event.save();
     res.status(201).send({ message: 'Event created successfully', event });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
+
 
 // Route to get events
 app.get('/events', async (req, res) => {
@@ -188,32 +207,41 @@ app.get('/events', async (req, res) => {
   }
 });
 
+
 // Route to get events by a specific date
 app.get('/events/:date', async (req, res) => {
   const { date } = req.params;
   try {
+    const startOfDay = new Date(date);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
     const events = await Event.find({
-      time: { $gte: new Date(date), $lt: new Date(new Date(date).setDate(new Date(date).getDate() + 1)) }
+      startTime: { $lt: endOfDay },
+      endTime: { $gte: startOfDay },
     });
+
     res.status(200).send({ events });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
 
+
 // Route to create a location with image upload
 app.post('/locations', upload.single('image'), async (req, res) => {
-  const { location, address } = req.body;
+  const { location, address, description } = req.body; // Include description
   const image = req.file ? req.file.path : '';
 
   try {
-    const loc = new Location({ location, image, address });
+    const loc = new Location({ location, image, address, description }); // Save description
     await loc.save();
     res.status(201).send({ message: 'Location created successfully', loc });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 // Route to get all locations
 app.get('/locations', async (req, res) => {
@@ -242,7 +270,6 @@ app.get('/locations/:id', async (req, res) => {
     const location = await Location.findById(id);
     if (!location) return res.status(404).send({ error: 'Location not found' });
 
-    // Convert the image path to a full URL if necessary
     const locationWithFullImageUrl = {
       ...location.toObject(),
       image: location.image ? `http://localhost:${port}/${location.image.replace('\\', '/')}` : ''
@@ -253,6 +280,27 @@ app.get('/locations/:id', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+
+
+// Route to get all events for a specific location
+app.get('/locations/:id/events', async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ error: 'Invalid location ID' });
+  }
+
+  try {
+    // Find all events for the location
+    const events = await Event.find({ location: id });
+
+    res.status(200).send({ events });
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
+
 
 
 // Start the server

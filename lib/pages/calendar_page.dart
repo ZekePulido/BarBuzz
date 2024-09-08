@@ -1,27 +1,41 @@
 import 'dart:convert';
+import 'package:barbuzz/pages/full_calendar_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'full_calendar_page.dart'; // Import FullCalendarPage if needed
+import 'package:intl/intl.dart'; // Import the intl package
 
 class Event {
   final String title;
-  final String location;
-  final DateTime time;
+  final String locationName; // Use locationName instead of location
+  final DateTime startTime;
+  final DateTime endTime;
 
   Event({
     required this.title,
-    required this.location,
-    required this.time,
+    required this.locationName, // Update to use locationName
+    required this.startTime,
+    required this.endTime,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       title: json['title'] ?? 'No Title',
-      location: json['location'] ?? 'No Location',
-      time: json['time'] != null
-          ? DateTime.parse(json['time'])
+      locationName: json['locationName'] ?? 'No Location', // Update to use locationName
+      startTime: json['startTime'] != null
+          ? DateTime.parse(json['startTime'])
+          : DateTime.now(),
+      endTime: json['endTime'] != null
+          ? DateTime.parse(json['endTime'])
           : DateTime.now(),
     );
+  }
+
+  String get formattedStartTime {
+    return DateFormat('h:mm a').format(startTime); // Format to show time only
+  }
+
+  String get formattedEndTime {
+    return DateFormat('h:mm a').format(endTime); // Format to show time only
   }
 }
 
@@ -32,9 +46,15 @@ Future<List<Event>> fetchEvents() async {
     final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = json.decode(response.body)['events'];
-      print('Fetched events: $jsonResponse'); // Debug output
-      return jsonResponse.map((eventJson) => Event.fromJson(eventJson)).toList();
+      final jsonResponse = json.decode(response.body);
+
+      List<dynamic> eventsJsonList;
+      if (jsonResponse is Map<String, dynamic> && jsonResponse.containsKey('events')) {
+        eventsJsonList = jsonResponse['events'];
+      } else {
+        eventsJsonList = jsonResponse is List<dynamic> ? jsonResponse : [];
+      }
+      return eventsJsonList.map((eventJson) => Event.fromJson(eventJson)).toList();
     } else {
       throw Exception('Failed to load events');
     }
@@ -43,6 +63,7 @@ Future<List<Event>> fetchEvents() async {
     return [];
   }
 }
+
 
 class CalendarPage extends StatefulWidget {
   @override
@@ -62,17 +83,18 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _fetchAndSetEvents() async {
     try {
       final events = await fetchEvents();
+
       final today = DateTime.now();
       final tomorrow = DateTime.now().add(Duration(days: 1));
 
       setState(() {
         _todayEvents = events.where((event) {
-          final eventDate = DateTime(event.time.year, event.time.month, event.time.day);
+          final eventDate = DateTime(event.startTime.year, event.startTime.month, event.startTime.day);
           return eventDate == DateTime(today.year, today.month, today.day);
         }).toList();
 
         _tomorrowEvents = events.where((event) {
-          final eventDate = DateTime(event.time.year, event.time.month, event.time.day);
+          final eventDate = DateTime(event.startTime.year, event.startTime.month, event.startTime.day);
           return eventDate == DateTime(tomorrow.year, tomorrow.month, tomorrow.day);
         }).toList();
       });
@@ -156,7 +178,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                                 subtitle: Text(
-                                  '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                                  '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
                                   style: TextStyle(color: Colors.grey),
                                 ),
                               );
@@ -191,7 +213,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                                 subtitle: Text(
-                                  '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                                  '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
                                   style: TextStyle(color: Colors.grey),
                                 ),
                               );

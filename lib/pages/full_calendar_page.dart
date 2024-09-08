@@ -2,28 +2,40 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart'; // Import the intl package
 import 'package:barbuzz/pages/main_page.dart';
 
-// Event class definition
 class Event {
   final String title;
   final String location;
-  final DateTime time;
+  final DateTime startTime;
+  final DateTime endTime;
+  final String locationName;
 
   Event({
     required this.title,
     required this.location,
-    required this.time,
+    required this.startTime,
+    required this.endTime,
+    required this.locationName,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       title: json['title'] ?? 'No Title',
       location: json['location'] ?? 'No Location',
-      time: json['time'] != null
-          ? DateTime.parse(json['time'])
-          : DateTime.now(),
+      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : DateTime.now(),
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : DateTime.now(),
+      locationName: json['locationName'] ?? 'No Location Name',
     );
+  }
+
+  String get formattedStartTime {
+    return DateFormat('h:mm a').format(startTime); // Format to show start time
+  }
+
+  String get formattedEndTime {
+    return DateFormat('h:mm a').format(endTime); // Format to show end time
   }
 }
 
@@ -36,13 +48,11 @@ Future<List<Event>> fetchEvents() async {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = json.decode(response.body)['events'];
-      print('Fetched events: $jsonResponse'); // Debug output
       return jsonResponse.map((eventJson) => Event.fromJson(eventJson)).toList();
     } else {
       throw Exception('Failed to load events');
     }
   } catch (error) {
-    print('Error fetching events: $error');
     return [];
   }
 }
@@ -69,7 +79,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
       final Map<DateTime, List<Event>> eventsMap = {};
 
       for (var event in events) {
-        final normalizedDate = DateTime(event.time.year, event.time.month, event.time.day);
+        final normalizedDate = DateTime(event.startTime.year, event.startTime.month, event.startTime.day);
         if (!eventsMap.containsKey(normalizedDate)) {
           eventsMap[normalizedDate] = [];
         }
@@ -80,7 +90,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         _events = eventsMap;
       });
     } catch (error) {
-      print('Failed to fetch events: $error');
+      print('Error fetching events: $error');
     }
   }
 
@@ -107,7 +117,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         automaticallyImplyLeading: false,
         backgroundColor: Color.fromARGB(220, 255, 179, 0),
         title: Padding(
-          padding: EdgeInsets.only(left: screenWidth * 0.15), // 10% padding on each side
+          padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on each side
           child: Center(
             child: Image.asset(
               'assets/logos/BarBuzz.png',
@@ -161,7 +171,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                   markerBuilder: (context, date, events) {
                     final normalizedDate = DateTime(date.year, date.month, date.day);
                     final hasEvents = _events.containsKey(normalizedDate);
-                    
+
                     if (hasEvents) {
                       return Positioned(
                         bottom: 1,
@@ -204,7 +214,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                           style: TextStyle(color: Colors.white),
                         ),
                         subtitle: Text(
-                          '${event.location} • ${event.time.hour}:${event.time.minute.toString().padLeft(2, '0')}',
+                          '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
                           style: TextStyle(color: Colors.grey),
                         ),
                       );
@@ -249,10 +259,4 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
       ),
     );
   }
-}
-
-void main() {
-  runApp(MaterialApp(
-    home: FullCalendarPage(),
-  ));
 }

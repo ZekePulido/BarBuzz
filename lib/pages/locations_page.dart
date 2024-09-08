@@ -74,77 +74,77 @@ class _LocationsPageState extends State<LocationsPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final double searchBarHeight = screenSize.height * 0.07;
+Widget build(BuildContext context) {
+  final screenSize = MediaQuery.of(context).size;
+  final double searchBarHeight = screenSize.height * 0.07;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: searchBarHeight,
-                child: Container(
-                  padding: EdgeInsets.all(4),
-                  color: Colors.black,
-                  child: TextField(
-                    onChanged: _onSearchQueryChanged,
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                      hintText: 'Search...',
-                      hintStyle: TextStyle(color: Colors.white70),
-                      prefixIcon: Icon(Icons.search, color: Colors.white),
-                      filled: true,
-                      fillColor: Colors.white24,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
+  return Scaffold(
+    backgroundColor: Colors.black,
+    body: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: searchBarHeight,
+              child: Container(
+                padding: EdgeInsets.all(4),
+                color: Colors.black,
+                child: TextField(
+                  onChanged: _onSearchQueryChanged,
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                    hintText: 'Search...',
+                    hintStyle: TextStyle(color: Colors.white70),
+                    prefixIcon: Icon(Icons.search, color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white24,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none,
                     ),
-                    style: TextStyle(color: Colors.white),
                   ),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-              SizedBox(height: 16.0),
+            ),
+            SizedBox(height: 16.0),
 
-              // Fetch and display location cards
-              FutureBuilder<List<Location>>(
-                future: _locations,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No locations available.'));
-                  } else {
-                    final locations = snapshot.data!
-                        .where((location) => location.location
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase()))
-                        .toList();
+            FutureBuilder<List<Location>>(
+              future: _locations,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No locations available.'));
+                } else {
+                  final locations = snapshot.data!
+                      .where((location) => location.location
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()))
+                      .toList();
 
-                    return Column(
-                      children: locations.map((location) {
-                        return LocationCard(
-                          imagePath: location.image,
-                          location: location.location,
-                          locationId: location.id,
-                          onTap: () => _navigateToBarPage(location), // Pass the whole location object
-                        );
-                      }).toList(),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
+                  return Column(
+                    children: locations.map((location) {
+                      return LocationCard(
+                        imagePath: location.image.isNotEmpty ? location.image : 'https://via.placeholder.com/150', // Default image
+                        location: location.location.isNotEmpty ? location.location : 'Unknown Location', // Default name
+                        locationId: location.id,
+                        onTap: () => _navigateToBarPage(location),
+                      );
+                    }).toList(),
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
