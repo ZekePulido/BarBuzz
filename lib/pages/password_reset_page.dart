@@ -44,7 +44,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(175, 114, 0, 0),
+                      color: Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -184,7 +184,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Colors.black, // Background color of the button
                               ),
                               child: const Text(
                                 'Submit',
@@ -205,7 +205,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                                   Navigator.pop(context);
                                 },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color.fromARGB(175, 168, 0, 0), // Background color of the button
+                                backgroundColor: Colors.black, // Background color of the button
                               ),
                               child: const Text(
                                 'BACK',

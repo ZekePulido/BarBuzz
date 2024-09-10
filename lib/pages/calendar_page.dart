@@ -41,19 +41,17 @@ class Event {
 
 const String apiUrl = 'http://10.0.2.2:3000/events'; // Adjust URL as needed
 
-Future<List<Event>> fetchEvents() async {
+Future<List<Event>> fetchEvents({String? tag}) async {
   try {
-    final response = await http.get(Uri.parse(apiUrl));
+    final uri = tag == null 
+      ? Uri.parse(apiUrl)
+      : Uri.parse('$apiUrl/tag/$tag'); // Use the tag endpoint
+
+    final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
-
-      List<dynamic> eventsJsonList;
-      if (jsonResponse is Map<String, dynamic> && jsonResponse.containsKey('events')) {
-        eventsJsonList = jsonResponse['events'];
-      } else {
-        eventsJsonList = jsonResponse is List<dynamic> ? jsonResponse : [];
-      }
+      final eventsJsonList = jsonResponse['events'] as List<dynamic>;
       return eventsJsonList.map((eventJson) => Event.fromJson(eventJson)).toList();
     } else {
       throw Exception('Failed to load events');
@@ -64,13 +62,14 @@ Future<List<Event>> fetchEvents() async {
   }
 }
 
-
 class CalendarPage extends StatefulWidget {
   @override
   _CalendarPageState createState() => _CalendarPageState();
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  String _selectedTag = 'All'; // Default tag
+
   List<Event> _todayEvents = [];
   List<Event> _tomorrowEvents = [];
 
@@ -80,9 +79,9 @@ class _CalendarPageState extends State<CalendarPage> {
     _fetchAndSetEvents();
   }
 
-  Future<void> _fetchAndSetEvents() async {
+  Future<void> _fetchAndSetEvents({String? tag}) async {
     try {
-      final events = await fetchEvents();
+      final events = await fetchEvents(tag: tag);
 
       final today = DateTime.now();
       final tomorrow = DateTime.now().add(Duration(days: 1));
@@ -101,6 +100,13 @@ class _CalendarPageState extends State<CalendarPage> {
     } catch (error) {
       print('Failed to fetch events: $error');
     }
+  }
+
+  void _onTagSelected(String tag) {
+    setState(() {
+      _selectedTag = tag;
+      _fetchAndSetEvents(tag: tag == 'All' ? null : tag); // Pass null for "All" to fetch all events
+    });
   }
 
   @override
@@ -144,10 +150,10 @@ class _CalendarPageState extends State<CalendarPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildNavItem(Icons.local_offer, "All Deals"),
-                _buildNavItem(Icons.local_drink, "Drinks"),
-                _buildNavItem(Icons.fastfood, "Food"),
-                _buildNavItem(Icons.music_note, "Events"),
+                _buildNavItem(Icons.local_offer, "All Deals", 'All'),
+                _buildNavItem(Icons.fastfood, "Food", 'Food'),
+                _buildNavItem(Icons.local_drink, "Drinks", 'Drinks'),
+                _buildNavItem(Icons.music_note, "Events", 'Events'),
               ],
             ),
           ),
@@ -235,17 +241,31 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: Colors.grey),
-        SizedBox(height: 2), // Add spacing between icon and label
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey),
+  Widget _buildNavItem(IconData icon, String label, String tag) {
+    final isSelected = _selectedTag == tag;
+
+    return GestureDetector(
+      onTap: () => _onTagSelected(tag),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add padding for better touch area
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.yellow.withOpacity(0.2) : Colors.transparent, // Highlight background
+          borderRadius: BorderRadius.circular(8), // Rounded corners for the highlight
         ),
-      ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSelected ? Colors.yellow : Colors.grey), // Highlight icon
+            SizedBox(height: 4), // Add spacing between icon and label
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.yellow : Colors.grey, // Highlight label
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

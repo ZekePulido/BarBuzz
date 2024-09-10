@@ -53,7 +53,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  Future<void> _logout() async{
+  Future<void> _logout() async {
     await _storage.delete(key: 'auth_token');
     Navigator.pushReplacement(
       context,
@@ -73,10 +73,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
       body: Column(
         children: [
           // Top left section
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: EdgeInsets.all(screenWidth * 0.05), // Padding from the edges
+          Padding(
+            padding: EdgeInsets.all(screenWidth * 0.05), // Padding from the edges
+            child: Align(
+              alignment: Alignment.topLeft,
               child: Text(
                 'Welcome, $_username!',
                 style: TextStyle(
@@ -87,33 +87,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
             ),
           ),
-          // Centered section
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min, // Makes the Column only as tall as its content
-                children: [
-                  Text(
-                    'Your reward points:',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.06,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.02), // Space between texts
-                  Text(
-                    '0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.1, // Larger font size for emphasis
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          Spacer(), // Spacer widget to push logout button to the bottom
           // Logout button
           Padding(
             padding: EdgeInsets.all(screenWidth * 0.05), // Padding around the button

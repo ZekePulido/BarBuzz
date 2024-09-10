@@ -49,29 +49,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: screenHeight * 0.15),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ApplyLocationPage(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
-              ),
-              child: Text(
-                'APPLY MY LOCATION',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: screenWidth * 0.04, // Font size as 4% of screen width
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.02),
           ],
         ),
       ),

@@ -38,7 +38,9 @@ const eventSchema = new mongoose.Schema({
   locationName: String, // Ensure this field is present
   startTime: Date,
   endTime: Date,
+  tag: String // Single tag
 });
+
 
 
 const locationSchema = new mongoose.Schema({
@@ -169,9 +171,8 @@ app.get('/favorites', authenticateToken, async (req, res) => {
 });
 
 
-
 app.post('/events', async (req, res) => {
-  const { title, location, startTime, endTime } = req.body;
+  const { title, location, startTime, endTime, tag } = req.body;
 
   try {
     // Find the location to get the name
@@ -186,6 +187,7 @@ app.post('/events', async (req, res) => {
       locationName: loc.location, // Save the location name
       startTime: new Date(startTime),
       endTime: new Date(endTime),
+      tag // Save the single tag
     });
 
     await event.save();
@@ -194,6 +196,7 @@ app.post('/events', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 
 
@@ -227,6 +230,16 @@ app.get('/events/:date', async (req, res) => {
   }
 });
 
+app.get('/events/tag/:tag', async (req, res) => {
+  const { tag } = req.params;
+
+  try {
+    const events = await Event.find({ tag });
+    res.status(200).send({ events });
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
 
 // Route to create a location with image upload
 app.post('/locations', upload.single('image'), async (req, res) => {
