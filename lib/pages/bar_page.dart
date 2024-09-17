@@ -1,38 +1,11 @@
 import 'dart:convert';
+import 'package:barbuzz/pages/event_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'main_page.dart';
 import 'package:intl/intl.dart';
-
-// Event class for parsing event details
-class Event {
-  final String title;
-  final DateTime startTime;
-  final DateTime endTime;
-
-  Event({
-    required this.title,
-    required this.startTime,
-    required this.endTime,
-  });
-
-  factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      title: json['title'] ?? 'No Title',
-      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : DateTime.now(),
-      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : DateTime.now(),
-    );
-  }
-
-  String get formattedStartDateTime {
-    return DateFormat('MMMM d, yyyy h:mm a').format(startTime);
-  }
-
-  String get formattedEndDateTime {
-    return DateFormat('h:mm a').format(endTime);
-  }
-}
+import 'package:barbuzz/models/event.dart';
 
 class BarPage extends StatefulWidget {
   final String imagePath;
@@ -151,6 +124,7 @@ class _BarPageState extends State<BarPage> {
   }
 
   @override
+@override
 Widget build(BuildContext context) {
   final screenWidth = MediaQuery.of(context).size.width;
 
@@ -253,6 +227,14 @@ Widget build(BuildContext context) {
                                 '${event.formattedStartDateTime} - ${event.formattedEndDateTime}',
                                 style: TextStyle(color: Colors.grey),
                               ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EventDetailsPage(event: event),
+                                  ),
+                                );
+                              },
                             );
                           },
                         ),

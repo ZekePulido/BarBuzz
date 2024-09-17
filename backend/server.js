@@ -38,10 +38,10 @@ const eventSchema = new mongoose.Schema({
   locationName: String, // Ensure this field is present
   startTime: Date,
   endTime: Date,
-  tag: String // Single tag
+  tag: String, // Single tag
+  description: String, // New field for event description
+  image: String, // New field for event image
 });
-
-
 
 const locationSchema = new mongoose.Schema({
   location: String,
@@ -49,7 +49,6 @@ const locationSchema = new mongoose.Schema({
   address: String,
   description: String, // Add description field
 });
-
 
 const User = mongoose.model('User', userSchema);
 const Event = mongoose.model('Event', eventSchema);
@@ -156,8 +155,6 @@ app.post('/favorites', authenticateToken, async (req, res) => {
   }
 });
 
-
-
 // Route to get the user's favorites
 app.get('/favorites', authenticateToken, async (req, res) => {
   try {
@@ -170,9 +167,10 @@ app.get('/favorites', authenticateToken, async (req, res) => {
   }
 });
 
-
-app.post('/events', async (req, res) => {
-  const { title, location, startTime, endTime, tag } = req.body;
+// Route to create an event with optional image upload
+app.post('/events', upload.single('image'), async (req, res) => {
+  const { title, location, startTime, endTime, tag, description } = req.body;
+  const image = req.file ? req.file.path : '';
 
   try {
     // Find the location to get the name
@@ -187,7 +185,9 @@ app.post('/events', async (req, res) => {
       locationName: loc.location, // Save the location name
       startTime: new Date(startTime),
       endTime: new Date(endTime),
-      tag // Save the single tag
+      tag, // Save the single tag
+      description, // Save the description
+      image, // Save the image path
     });
 
     await event.save();
@@ -197,19 +197,20 @@ app.post('/events', async (req, res) => {
   }
 });
 
-
-
-
 // Route to get events
 app.get('/events', async (req, res) => {
   try {
     const events = await Event.find();
-    res.status(200).send({ events });
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    }));
+    res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
-
 
 // Route to get events by a specific date
 app.get('/events/:date', async (req, res) => {
@@ -224,18 +225,29 @@ app.get('/events/:date', async (req, res) => {
       endTime: { $gte: startOfDay },
     });
 
-    res.status(200).send({ events });
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    }));
+    res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
 
+// Route to get events by tag
 app.get('/events/tag/:tag', async (req, res) => {
   const { tag } = req.params;
 
   try {
     const events = await Event.find({ tag });
-    res.status(200).send({ events });
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    }));
+    res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
@@ -255,7 +267,6 @@ app.post('/locations', upload.single('image'), async (req, res) => {
   }
 });
 
-
 // Route to get all locations
 app.get('/locations', async (req, res) => {
   try {
@@ -263,8 +274,8 @@ app.get('/locations', async (req, res) => {
     // Convert the image path to a full URL if necessary
     const locationsWithFullImageUrls = locations.map(loc => ({
       ...loc.toObject(),
-      image: loc.image ? `http://10.0.2.2:3000/${loc.image.replace('\\', '/')}` : ''
-    }));
+      image: loc.image ? `http://10.0.2.2:${port}/${loc.image.replace('\\', '/')}` : ''
+    }));    
     res.status(200).send(locationsWithFullImageUrls);
   } catch (err) {
     res.status(400).send({ error: err.message });
@@ -285,7 +296,7 @@ app.get('/locations/:id', async (req, res) => {
 
     const locationWithFullImageUrl = {
       ...location.toObject(),
-      image: location.image ? `http://localhost:${port}/${location.image.replace('\\', '/')}` : ''
+      image: location.image ? `http://10.0.2.2:${port}/${location.image.replace('\\', '/')}` : ''
     };
 
     res.status(200).send(locationWithFullImageUrl);
@@ -293,8 +304,6 @@ app.get('/locations/:id', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
-
-
 
 // Route to get all events for a specific location
 app.get('/locations/:id/events', async (req, res) => {
@@ -308,13 +317,16 @@ app.get('/locations/:id/events', async (req, res) => {
     // Find all events for the location
     const events = await Event.find({ location: id });
 
-    res.status(200).send({ events });
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    }));
+    res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
-
-
 
 // Start the server
 app.listen(port, () => {
