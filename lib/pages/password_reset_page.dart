@@ -2,6 +2,8 @@ import 'package:barbuzz/pages/log_in_page.dart';
 import 'package:flutter/material.dart';
 
 class PasswordResetPage extends StatefulWidget {
+  const PasswordResetPage({super.key});
+
   @override
   _PasswordResetPageState createState() => _PasswordResetPageState();
 }
@@ -44,7 +46,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(220, 255, 179, 0),
+                      color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -81,7 +83,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter your email...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04, // Horizontal padding as 4% of screen width
                             ),
@@ -116,7 +118,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter new password...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -151,7 +153,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Confirm new password...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),

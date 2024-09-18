@@ -29,6 +29,8 @@ class Location {
 }
 
 class LocationsPage extends StatefulWidget {
+  const LocationsPage({super.key});
+
   @override
   _LocationsPageState createState() => _LocationsPageState();
 }
@@ -81,7 +83,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Colors.black,
     body: Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,15 +91,15 @@ Widget build(BuildContext context) {
             SizedBox(
               height: searchBarHeight,
               child: Container(
-                padding: EdgeInsets.all(4),
+                padding: const EdgeInsets.all(4),
                 color: Colors.black,
                 child: TextField(
                   onChanged: _onSearchQueryChanged,
                   decoration: InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     hintText: 'Search...',
-                    hintStyle: TextStyle(color: Colors.white70),
-                    prefixIcon: Icon(Icons.search, color: Colors.white),
+                    hintStyle: const TextStyle(color: Colors.white70),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white),
                     filled: true,
                     fillColor: Colors.white24,
                     border: OutlineInputBorder(
@@ -105,21 +107,21 @@ Widget build(BuildContext context) {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             FutureBuilder<List<Location>>(
               future: _locations,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No locations available.'));
+                  return const Center(child: Text('No locations available.'));
                 } else {
                   final locations = snapshot.data!
                       .where((location) => location.location

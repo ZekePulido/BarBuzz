@@ -28,7 +28,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve i
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  nickname: String,
+  email: String, // New field for email
+  confirmEmail: String, // New field for email confirmation
+  venueAddress: String, // New field for venue address
+  venueName: String, // New field for venue name
+  venueDescription: String, // New field for venue description
+  venueWebsite: String, // New field for venue website
+  type: Number, // 1 for bar, 0 for signup
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
 });
 
@@ -69,16 +75,32 @@ const upload = multer({
 
 // Sign Up Route
 app.post('/signup', async (req, res) => {
-  const { username, password, nickname } = req.body;
+  const { username, password, email, confirmEmail, venueAddress, venueName, venueDescription, venueWebsite, type } = req.body;
   try {
+    // Basic validation
+    if (email !== confirmEmail) {
+      return res.status(400).send({ error: 'Emails do not match' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword, nickname });
+    const user = new User({ 
+      username, 
+      password: hashedPassword, 
+      email,
+      confirmEmail,
+      venueAddress,
+      venueName,
+      venueDescription,
+      venueWebsite,
+      type,
+    });
     await user.save();
     res.status(201).send({ message: 'User created successfully' });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 // Login Route
 app.post('/login', async (req, res) => {

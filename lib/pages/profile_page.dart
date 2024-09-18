@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:barbuzz/pages/sign_up_page.dart';
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -16,7 +18,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end, // Aligns content to the bottom
           children: [
@@ -30,7 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
+                backgroundColor: const Color.fromARGB(220, 255, 179, 0), // Background color of the button
               ),
               child: Text(
                 'SIGN UP',

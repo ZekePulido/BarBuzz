@@ -58,6 +58,8 @@ Future<List<Event>> fetchEvents() async {
 }
 
 class FullCalendarPage extends StatefulWidget {
+  const FullCalendarPage({super.key});
+
   @override
   _FullCalendarPageState createState() => _FullCalendarPageState();
 }
@@ -115,7 +117,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Padding(
           padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on each side
           child: Center(
@@ -127,7 +129,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _fetchEvents,
             color: Colors.white,
           ),
@@ -138,21 +140,21 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
           Flexible(
             flex: 4,
             child: Container(
-              padding: EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0),
               child: TableCalendar(
                 locale: 'en_US',
                 rowHeight: 43,
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
                 onDaySelected: _onDaySelected,
-                headerStyle: HeaderStyle(
+                headerStyle: const HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
                   titleTextStyle: TextStyle(color: Colors.white),
                   leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
                   rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
                 ),
-                calendarStyle: CalendarStyle(
+                calendarStyle: const CalendarStyle(
                   selectedDecoration: BoxDecoration(
                     color: Color.fromARGB(220, 255, 179, 0),
                     shape: BoxShape.circle,
@@ -180,10 +182,10 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                           children: List.generate(
                             _events[normalizedDate]!.length,
                             (index) => Container(
-                              margin: EdgeInsets.symmetric(horizontal: 1),
+                              margin: const EdgeInsets.symmetric(horizontal: 1),
                               width: 4,
                               height: 4,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Color.fromARGB(220, 255, 179, 0),
                                 shape: BoxShape.circle,
                               ),
@@ -192,7 +194,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                         ),
                       );
                     }
-                    return SizedBox.shrink();
+                    return const SizedBox.shrink();
                   },
                 ),
                 firstDay: DateTime.utc(2010, 10, 16),
@@ -211,16 +213,16 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
                       return ListTile(
                         title: Text(
                           event.title,
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                         ),
                         subtitle: Text(
                           '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
-                          style: TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       );
                     },
                   )
-                : Center(
+                : const Center(
                     child: Text(
                       'No events for selected day',
                       style: TextStyle(color: Colors.white),
@@ -230,7 +232,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color.fromARGB(100, 105, 105, 105),
+        backgroundColor: const Color.fromARGB(100, 105, 105, 105),
         currentIndex: 1,
         onTap: (index) {
           Navigator.pushReplacement(
@@ -240,9 +242,9 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
             ),
           );
         },
-        selectedItemColor: Color.fromARGB(220, 255, 179, 0),
-        unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
-        items: [
+        selectedItemColor: const Color.fromARGB(220, 255, 179, 0),
+        unselectedItemColor: const Color.fromARGB(150, 192, 192, 192),
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.location_pin),
             label: 'Locations',

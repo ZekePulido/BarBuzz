@@ -6,7 +6,7 @@ class LocationCard extends StatelessWidget {
   final String locationId; // Keep locationId for favoriting functionality
   final Function onTap;
 
-  LocationCard({
+  const LocationCard({super.key, 
     required this.imagePath,
     required this.location, // Pass the location name
     required this.locationId, // Keep locationId for favoriting functionality
@@ -15,12 +15,12 @@ class LocationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageSize = 100.0; // Adjust size as needed
+    const imageSize = 100.0; // Adjust size as needed
 
     return Card(
       color: Colors.grey[800],
       child: ListTile(
-        contentPadding: EdgeInsets.all(8),
+        contentPadding: const EdgeInsets.all(8),
         leading: SizedBox(
           width: imageSize,
           height: imageSize,
@@ -42,13 +42,13 @@ class LocationCard extends StatelessWidget {
               }
             },
             errorBuilder: (context, error, stackTrace) {
-              return Center(
+              return const Center(
                 child: Icon(Icons.error, color: Colors.red),
               );
             },
           ),
         ),
-        title: Text(location, style: TextStyle(color: Colors.white)), // Display location name
+        title: Text(location, style: const TextStyle(color: Colors.white)), // Display location name
         onTap: () => onTap(),
       ),
     );

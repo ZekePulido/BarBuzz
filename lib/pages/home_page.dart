@@ -5,6 +5,8 @@ import '../pages/log_in_page.dart';
 import '../pages/sign_up_page.dart';
 
 class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Obtain screen size
@@ -45,7 +47,7 @@ class HomePage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
                       ),
                       child: const Text(
                         'SIGN UP',
@@ -71,7 +73,7 @@ class HomePage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
                       ),
                       child: const Text(
                         'LOG IN',
@@ -101,16 +103,16 @@ class HomePage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                  backgroundColor: const Color.fromARGB(220, 255, 179, 0),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.black,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'SKIP',
                       style: TextStyle(
@@ -138,9 +140,9 @@ class HomePage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(220, 255, 179, 0),
+                  backgroundColor: const Color.fromARGB(220, 255, 179, 0),
                 ),
-                child: Text(
+                child: const Text(
                   'APPLY MY BUSINESS',
                   style: TextStyle(
                     color: Colors.black,

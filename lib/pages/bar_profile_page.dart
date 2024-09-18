@@ -1,7 +1,9 @@
-import 'package:barbuzz/pages/apply_location_page.dart';
 import 'package:flutter/material.dart';
+import 'package:barbuzz/pages/apply_location_page.dart';
 
 class BarProfilePage extends StatefulWidget {
+  const BarProfilePage({super.key});
+
   @override
   _BarProfilePageState createState() => _BarProfilePageState();
 }
@@ -18,7 +20,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Center(
           child: Image.asset(
             'assets/logos/BarBuzz.png',
@@ -26,101 +28,139 @@ class _BarProfilePageState extends State<BarProfilePage> {
           ),
         ),
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(screenWidth * 0.05),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Bar Name",
-              style: TextStyle(
-                color: _textColor,
-                fontSize: screenWidth * 0.06,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            Image.asset(
-              'assets/logos/BarBuzz.png',
-              height: 200,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            Text(
-              'Website.com',
-              style: TextStyle(
-                color: _textColor,
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            Text(
-              'This is a bar',
-              style: TextStyle(
-                color: _textColor,
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            Text(
-              'Above is how your profile will look followed by a list of your upcoming events.',
-              style: TextStyle(
-                color: _textColor,
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ApplyLocationPage(),  // Replace with your target page
+            // Row for the image and venue details
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image with circular border
+                ClipOval(
+                  child: Image.asset(
+                    'assets/logos/BarBee.png',
+                    width: screenWidth * 0.45,
+                    height: screenWidth * 0.45,
+                    fit: BoxFit.cover,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(220, 255, 179, 0),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.edit,
-                    color: _textColor,
+                ),
+                SizedBox(width: screenWidth * 0.05), // Space between image and text
+                // Venue details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Venue Name
+                      Text(
+                        "Bar Name", // Replace with actual bar name
+                        style: TextStyle(
+                          color: _textColor,
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.01),
+                      // Venue Address
+                      Text(
+                        "123 Main St, City, Country", // Replace with actual address
+                        style: TextStyle(
+                          color: _textColor,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.02),
+                      // Description
+                      Text(
+                        'This is a bar', // Replace with actual description
+                        style: TextStyle(
+                          color: _textColor,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.02),
+                    ],
                   ),
-                  SizedBox(width: screenWidth * 0.02),
-                  Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: _textColor,
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold,
+                ),
+              ],
+            ),
+            SizedBox(height: screenHeight * 0.02),
+            // Row for the buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ApplyLocationPage(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(220, 255, 179, 0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.add_circle_outline_rounded,
+                          color: _textColor,
+                        ),
+                        SizedBox(width: screenWidth * 0.01),
+                        Text(
+                          'NEW EVENT',
+                          style: TextStyle(
+                            color: _textColor,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            ElevatedButton(
-              onPressed: () {
-                // Handle continue to payment action
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(220, 255, 179, 0),
-              ),
-              child: Text(
-                'CONTINUE TO PAYMENT',
-                style: TextStyle(
-                  color: _textColor,
-                  fontSize: screenWidth * 0.04,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
+                SizedBox(width: screenWidth * 0.01), // Adjust spacing between buttons
+                Flexible(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ApplyLocationPage(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(220, 255, 179, 0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.notifications_active,
+                          color: _textColor,
+                        ),
+                        SizedBox(width: screenWidth * 0.01),
+                        Text(
+                          'SEND PUSH',
+                          style: TextStyle(
+                            color: _textColor,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

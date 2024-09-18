@@ -1,7 +1,11 @@
 import 'package:barbuzz/pages/bar_profile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ApplyLocationPage extends StatefulWidget {
+  const ApplyLocationPage({super.key});
+
   @override
   _ApplyLocationPageState createState() => _ApplyLocationPageState();
 }
@@ -17,6 +21,56 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
   final TextEditingController _venueNameController = TextEditingController();
   final TextEditingController _venueDescriptionController = TextEditingController();
   final TextEditingController _venueWebsiteController = TextEditingController();
+
+  Future<void> _submitForm() async {
+  if (_formKey.currentState?.validate() ?? false) {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+    final email = _emailController.text;
+    final venueAddress = _venueAddressController.text;
+    final venueName = _venueNameController.text;
+    final venueDescription = _venueDescriptionController.text;
+    final venueWebsite = _venueWebsiteController.text;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/signup'), 
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'email': email,
+          'confirmEmail': _confirmEmailController.text,
+          'venueAddress': venueAddress,
+          'venueName': venueName,
+          'venueDescription': venueDescription,
+          'venueWebsite': venueWebsite,
+          'type': 1, // Setting type to 1
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BarProfilePage(),  // Replace with your target page
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to apply location. ${response.body}')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $error')),
+      );
+    }
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +103,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(220, 255, 179, 0),
+                      color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -75,7 +129,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04, // Horizontal padding as 4% of screen width
                             ),
@@ -109,7 +163,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter password...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -141,7 +195,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter email...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -173,7 +227,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Confirm Email...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -205,7 +259,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter venue address...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -237,7 +291,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter venue name...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -269,7 +323,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter description...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -301,7 +355,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter venue website...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -314,30 +368,12 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                           },
                         ),
                         SizedBox(height: screenHeight * 0.02),
-                        // Venue Image Label
-                        Text(
-                          'Venue Image *This will be displayed*',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
                             width: screenWidth * 0.5, // 50% of the screen width
                             child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState?.validate() ?? false) {
-                                  Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BarProfilePage(),  // Replace with your target page
-                                  ),
-                                );
-                                }
-                              },
+                              onPressed: _submitForm, // Call _submitForm on press
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black, // Background color of the button
                               ),
@@ -357,7 +393,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
                             width: screenWidth * 0.5, // 50% of the screen width
                             child: ElevatedButton(
                               onPressed: () {
-                               Navigator.pop(context);
+                                Navigator.pop(context);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black, // Background color of the button

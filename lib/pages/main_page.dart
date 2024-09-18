@@ -8,7 +8,7 @@ import 'profile_page.dart';  // Import ProfilePage widget
 class MainPage extends StatefulWidget {
   final int selectedIndex;
 
-  MainPage({required this.selectedIndex});
+  const MainPage({super.key, required this.selectedIndex});
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -17,7 +17,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late PageController _pageController;
   bool _loggedIn = false;
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   int _currentIndex = 0; // Track the current page index
 
   @override
@@ -63,7 +63,7 @@ class _MainPageState extends State<MainPage> {
           ? null
           : AppBar(
               automaticallyImplyLeading: false, // Remove the back arrow
-              backgroundColor: Color.fromARGB(220, 255, 179, 0),
+              backgroundColor: const Color.fromARGB(220, 255, 179, 0),
               title: Center(
                 child: Image.asset(
                   'assets/logos/BarBuzz.png',
@@ -82,12 +82,12 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color.fromARGB(100, 105, 105, 105),
+        backgroundColor: const Color.fromARGB(100, 105, 105, 105),
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        selectedItemColor: Color.fromARGB(220, 255, 179, 0), // Color for selected item
-        unselectedItemColor: Color.fromARGB(150, 192, 192, 192), // Color for unselected items
-        items: [
+        selectedItemColor: const Color.fromARGB(220, 255, 179, 0), // Color for selected item
+        unselectedItemColor: const Color.fromARGB(150, 192, 192, 192), // Color for unselected items
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.location_pin),
             label: 'Locations',

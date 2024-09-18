@@ -4,14 +4,14 @@ import 'package:barbuzz/models/event.dart'; // Ensure this is the correct path
 class EventDetailsPage extends StatelessWidget {
   final Event event;
 
-  EventDetailsPage({required this.event});
+  const EventDetailsPage({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Padding(
           padding: EdgeInsets.only(right: screenWidth * 0.15),
           child: Center(
@@ -41,35 +41,35 @@ class EventDetailsPage extends StatelessWidget {
                     height: 200,
                     fit: BoxFit.cover,
                   ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               event.title,
-              style: TextStyle(fontSize: 28, color: Colors.white),
+              style: const TextStyle(fontSize: 28, color: Colors.white),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             if (event.locationName != null && event.locationName!.isNotEmpty)
               Text(
                 event.locationName!,
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
               )
             else
-              Text(
+              const Text(
                 'Location not available.',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               '${event.formattedStartDateTime} - ${event.formattedEndDateTime}',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             if (event.description != null && event.description!.isNotEmpty)
               Text(
                 event.description!,
-                style: TextStyle(fontSize: 18, color: Colors.white),
+                style: const TextStyle(fontSize: 18, color: Colors.white),
               )
             else
-              Text(
+              const Text(
                 'No description available.',
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),

@@ -12,7 +12,7 @@ class BarPage extends StatefulWidget {
   final String locationId;
   final String locationName;
 
-  BarPage({
+  const BarPage({super.key, 
     required this.imagePath,
     required this.locationId,
     required this.locationName,
@@ -26,7 +26,7 @@ class _BarPageState extends State<BarPage> {
   late Future<Map<String, dynamic>> _locationDetails;
   late Future<List<Event>> _events;
   bool _isFavorited = false;
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -50,10 +50,10 @@ class _BarPageState extends State<BarPage> {
   bool isDateInCurrentWeek(DateTime date) {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(Duration(days: 6));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
 
-    return date.isAfter(startOfWeek.subtract(Duration(days: 1))) &&
-           date.isBefore(endOfWeek.add(Duration(days: 1)));
+    return date.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+           date.isBefore(endOfWeek.add(const Duration(days: 1)));
   }
 
   Future<List<Event>> fetchEventsForLocation(String locationId) async {
@@ -130,7 +130,7 @@ Widget build(BuildContext context) {
 
   return Scaffold(
     appBar: AppBar(
-      backgroundColor: Color.fromARGB(220, 255, 179, 0),
+      backgroundColor: const Color.fromARGB(220, 255, 179, 0),
       title: Padding(
         padding: EdgeInsets.only(left: screenWidth * 0.005),
         child: Center(
@@ -157,11 +157,11 @@ Widget build(BuildContext context) {
         future: _locationDetails,
         builder: (context, locationSnapshot) {
           if (locationSnapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (locationSnapshot.hasError) {
             return Center(child: Text('Error: ${locationSnapshot.error}'));
           } else if (!locationSnapshot.hasData || locationSnapshot.data!.isEmpty) {
-            return Center(child: Text('No details available.'));
+            return const Center(child: Text('No details available.'));
           } else {
             final location = locationSnapshot.data!;
             return Column(
@@ -177,40 +177,40 @@ Widget build(BuildContext context) {
                         fit: BoxFit.cover,
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.locationName.isNotEmpty ? widget.locationName : 'Unknown Location',
-                            style: TextStyle(fontSize: 24, color: Colors.white),
+                            style: const TextStyle(fontSize: 24, color: Colors.white),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             "Address: ${location['address'] ?? 'No address provided'}",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                            style: const TextStyle(fontSize: 18, color: Colors.white),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             "Description: ${location['description'] ?? 'No description provided'}",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                            style: const TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 FutureBuilder<List<Event>>(
                   future: _events,
                   builder: (context, eventsSnapshot) {
                     if (eventsSnapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator());
                     } else if (eventsSnapshot.hasError) {
                       return Center(child: Text('Error: ${eventsSnapshot.error}'));
                     } else if (!eventsSnapshot.hasData || eventsSnapshot.data!.isEmpty) {
-                      return Center(child: Text('No events available.'));
+                      return const Center(child: Text('No events available.'));
                     } else {
                       final events = eventsSnapshot.data!;
                       return Expanded(
@@ -221,11 +221,11 @@ Widget build(BuildContext context) {
                             return ListTile(
                               title: Text(
                                 event.title,
-                                style: TextStyle(color: Colors.white),
+                                style: const TextStyle(color: Colors.white),
                               ),
                               subtitle: Text(
                                 '${event.formattedStartDateTime} - ${event.formattedEndDateTime}',
-                                style: TextStyle(color: Colors.grey),
+                                style: const TextStyle(color: Colors.grey),
                               ),
                               onTap: () {
                                 Navigator.push(
@@ -249,7 +249,7 @@ Widget build(BuildContext context) {
       ),
     ),
     bottomNavigationBar: BottomNavigationBar(
-      backgroundColor: Color.fromARGB(100, 105, 105, 105),
+      backgroundColor: const Color.fromARGB(100, 105, 105, 105),
       currentIndex: 0,
       onTap: (index) {
         Navigator.pushReplacement(
@@ -259,9 +259,9 @@ Widget build(BuildContext context) {
           ),
         );
       },
-      selectedItemColor: Color.fromARGB(220, 255, 179, 0),
-      unselectedItemColor: Color.fromARGB(150, 192, 192, 192),
-      items: [
+      selectedItemColor: const Color.fromARGB(220, 255, 179, 0),
+      unselectedItemColor: const Color.fromARGB(150, 192, 192, 192),
+      items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.location_pin),
           label: 'Locations',
