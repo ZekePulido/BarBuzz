@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:barbuzz/pages/apply_location_page.dart';
 
 class BarProfilePage extends StatefulWidget {
@@ -10,6 +13,50 @@ class BarProfilePage extends StatefulWidget {
 
 class _BarProfilePageState extends State<BarProfilePage> {
   static const Color _textColor = Colors.white;
+  String venueName = "Loading...";
+  String venueAddress = "Loading...";
+  String venueDescription = "Loading...";
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBarProfile();
+  }
+
+  Future<void> _fetchBarProfile() async {
+    final token = await _storage.read(key: 'auth_token');
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/bar-profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          venueName = data['venueName'];
+          venueAddress = data['venueAddress'];
+          venueDescription = data['venueDescription'];
+        });
+      } else {
+        // Handle error response
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorData['error'])),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load profile.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +80,9 @@ class _BarProfilePageState extends State<BarProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row for the image and venue details
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image with circular border
                 ClipOval(
                   child: Image.asset(
                     'assets/logos/BarBee.png',
@@ -46,15 +91,13 @@ class _BarProfilePageState extends State<BarProfilePage> {
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(width: screenWidth * 0.05), // Space between image and text
-                // Venue details
+                SizedBox(width: screenWidth * 0.05),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Venue Name
                       Text(
-                        "Bar Name", // Replace with actual bar name
+                        venueName,
                         style: TextStyle(
                           color: _textColor,
                           fontSize: screenWidth * 0.06,
@@ -62,18 +105,16 @@ class _BarProfilePageState extends State<BarProfilePage> {
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.01),
-                      // Venue Address
                       Text(
-                        "123 Main St, City, Country", // Replace with actual address
+                        venueAddress,
                         style: TextStyle(
                           color: _textColor,
                           fontSize: screenWidth * 0.04,
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.02),
-                      // Description
                       Text(
-                        'This is a bar', // Replace with actual description
+                        venueDescription,
                         style: TextStyle(
                           color: _textColor,
                           fontSize: screenWidth * 0.04,
@@ -87,7 +128,6 @@ class _BarProfilePageState extends State<BarProfilePage> {
               ],
             ),
             SizedBox(height: screenHeight * 0.02),
-            // Row for the buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -125,17 +165,12 @@ class _BarProfilePageState extends State<BarProfilePage> {
                     ),
                   ),
                 ),
-                SizedBox(width: screenWidth * 0.01), // Adjust spacing between buttons
+                SizedBox(width: screenWidth * 0.01),
                 Flexible(
                   flex: 1,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ApplyLocationPage(),
-                        ),
-                      );
+                      // Add your push notification logic here
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(220, 255, 179, 0),

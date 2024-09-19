@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../pages/main_page.dart';
 import '../pages/sign_up_page.dart';
 import '../pages/password_reset_page.dart';
+import '../pages/bar_profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/login'), // Use appropriate IP for emulator or device
+        Uri.parse('http://10.0.2.2:3000/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -38,25 +39,33 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final userType = data['type'];
 
         await _storage.write(key: 'auth_token', value: token);
 
-        // Navigate to the main page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainPage(selectedIndex: 1),
-          ),
-        );
+        // Navigate based on user type
+        if (userType == 1) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BarProfilePage(), // Update this to your bar page
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MainPage(selectedIndex: 1),
+            ),
+          );
+        }
       } else {
-        // Show error message
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['error'])),
         );
       }
     } catch (e) {
-      // Handle network errors or JSON parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred. Please try again.')),
       );
@@ -115,7 +124,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -147,7 +155,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -190,9 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: const Text(
                                 'Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
@@ -256,16 +261,11 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                  ),
+                                  Icon(Icons.arrow_back, color: Colors.white),
                                   SizedBox(width: 8),
                                   Text(
                                     'BACK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ],
                               ),

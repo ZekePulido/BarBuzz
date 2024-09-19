@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
   venueWebsite: String, // New field for venue website
   type: Number, // 1 for bar, 0 for signup
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
+  location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' }
 });
 
 const eventSchema = new mongoose.Schema({
@@ -83,6 +84,21 @@ app.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    let locationId;
+
+     // Create a location only if the user type is 1
+     if (type === 1) {
+      const location = new Location({
+        location: venueName, // Use the venue name for the location
+        address: venueAddress,
+        description: venueDescription,
+        // Optionally include an image if provided
+      });
+
+      await location.save();
+      locationId = location._id; // Store the newly created location ID
+    }
+
     const user = new User({ 
       username, 
       password: hashedPassword, 
@@ -93,6 +109,7 @@ app.post('/signup', async (req, res) => {
       venueDescription,
       venueWebsite,
       type,
+      location: locationId ? locationId : null,
     });
     await user.save();
     res.status(201).send({ message: 'User created successfully' });
@@ -113,7 +130,7 @@ app.post('/login', async (req, res) => {
     if (!match) return res.status(400).send({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.status(200).send({ message: 'Login successful', token });
+    res.status(200).send({ message: 'Login successful', token, type: user.type });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
@@ -146,6 +163,35 @@ app.get('/profile', authenticateToken, async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.get('/bar-profile', authenticateToken, async (req, res) => {
+  try {
+    const bar = await User.findOne({ username: req.user.username }).populate('location');
+    if (!bar) return res.status(404).send({ error: 'Bar not found' });
+
+    if (!bar.location) return res.status(404).send({ error: 'Location not found for this bar' });
+
+    // Fetch the events for the bar's location
+    const events = await Event.find({ location: bar.location._id });
+
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    }));
+
+    res.status(200).send({
+      venueName: bar.venueName,
+      venueAddress: bar.venueAddress,
+      venueDescription: bar.venueDescription,
+      locationId: bar.location._id,
+      events: eventsWithFullImageUrls, // Include events in the response
+    });
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
+
 
 // Route to add or remove a favorite location
 app.post('/favorites', authenticateToken, async (req, res) => {
