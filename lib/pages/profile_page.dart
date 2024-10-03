@@ -1,4 +1,3 @@
-import 'package:barbuzz/pages/apply_location_page.dart';
 import 'package:flutter/material.dart';
 import 'package:barbuzz/pages/sign_up_page.dart';
 
@@ -6,6 +5,7 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ProfilePageState createState() => _ProfilePageState();
 }
 
