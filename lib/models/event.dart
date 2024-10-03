@@ -1,38 +1,46 @@
 import 'package:intl/intl.dart';
 
 class Event {
+  final String eventId;
   final String title;
   final DateTime startTime;
   final DateTime endTime;
   final String image;
   final String? description;
   final String? locationName;
+  final String? tag; 
 
   Event({
+    required this.eventId,
     required this.title,
     required this.startTime,
     required this.endTime,
     this.image = '',
     this.description,
     this.locationName,
+    this.tag, 
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
+      eventId: json['_id'] ?? '',
       title: json['title'] ?? 'No Title',
-      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : DateTime.now(),
-      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : DateTime.now(),
+      startTime: DateTime.parse(json['startTime']),
+      endTime: DateTime.parse(json['endTime']),
       image: json['image'] ?? '',
       description: json['description'],
-      locationName: json['locationName'], // Corrected field name
+      locationName: json['locationName'],
+      tag: json['tag'], 
     );
   }
 
-  String get formattedStartDateTime {
-    return DateFormat('MMMM d, yyyy h:mm a').format(startTime);
+  String getFormattedStartTime() {
+    return DateFormat('MMMM dd, yyyy, h:mm a')
+        .format(startTime.toUtc().add(Duration(hours: -6))); // Adjust to CST
   }
 
-  String get formattedEndDateTime {
-    return DateFormat('h:mm a').format(endTime);
+  String getFormattedEndTime() {
+    return DateFormat('MMMM dd, yyyy, h:mm a')
+        .format(endTime.toUtc().add(Duration(hours: -6))); // Adjust to CST
   }
 }

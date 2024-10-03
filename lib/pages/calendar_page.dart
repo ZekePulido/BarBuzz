@@ -57,7 +57,6 @@ Future<List<Event>> fetchEvents({String? tag}) async {
       throw Exception('Failed to load events');
     }
   } catch (error) {
-    print('Error fetching events: $error');
     return [];
   }
 }
@@ -66,6 +65,7 @@ class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CalendarPageState createState() => _CalendarPageState();
 }
 

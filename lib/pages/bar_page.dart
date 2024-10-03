@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'main_page.dart';
-import 'package:intl/intl.dart';
 import 'package:barbuzz/models/event.dart';
 
 class BarPage extends StatefulWidget {
@@ -19,6 +18,7 @@ class BarPage extends StatefulWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _BarPageState createState() => _BarPageState();
 }
 
@@ -92,8 +92,8 @@ class _BarPageState extends State<BarPage> {
           _isFavorited = data['favorites'].any((fav) => fav['_id'] == widget.locationId);
         });
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Error fetching favorite status: $e');
     }
   }
 
@@ -116,10 +116,10 @@ class _BarPageState extends State<BarPage> {
           _isFavorited = !_isFavorited;
         });
       } else {
-        print('Failed to update favorites: ${response.statusCode}');
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Error toggling favorite: $e');
+
     }
   }
 
@@ -224,7 +224,7 @@ Widget build(BuildContext context) {
                                 style: const TextStyle(color: Colors.white),
                               ),
                               subtitle: Text(
-                                '${event.formattedStartDateTime} - ${event.formattedEndDateTime}',
+                                '${event.getFormattedStartTime} - ${event.getFormattedEndTime}',
                                 style: const TextStyle(color: Colors.grey),
                               ),
                               onTap: () {

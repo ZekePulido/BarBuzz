@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const port = 3000;
@@ -176,8 +177,14 @@ app.get('/bar-profile', authenticateToken, async (req, res) => {
 
     // Convert image path to a full URL if necessary
     const eventsWithFullImageUrls = events.map(event => ({
-      ...event.toObject(),
-      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+      _id: event._id, // Include event ID
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      tag: event.tag,
+      description: event.description,
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : '',
+      locationName: event.locationName,
     }));
 
     res.status(200).send({
@@ -280,6 +287,31 @@ app.get('/events', async (req, res) => {
   }
 });
 
+// Route to get event by event ID
+app.get('/events/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  // Validate if the provided event ID is valid
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).send({ error: 'Invalid event ID' });
+  }
+
+  try {
+    const event = await Event.findById(eventId); // Removed .populate('location') to keep the response lightweight
+    if (!event) return res.status(404).send({ error: 'Event not found' });
+
+    // Prepare the event data, including a full image URL
+    const eventWithFullImageUrl = {
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    };
+
+    res.status(200).send(eventWithFullImageUrl); // Send event details as a response
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
+
 // Route to get events by a specific date
 app.get('/events/:date', async (req, res) => {
   const { date } = req.params;
@@ -318,6 +350,54 @@ app.get('/events/tag/:tag', async (req, res) => {
     res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
+  }
+});
+
+// Route to update an event
+app.put('/events/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  // Validate if the provided event ID is valid
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).send({ error: 'Invalid event ID' });
+  }
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).send({ error: 'Event not found' });
+
+    // Update only the fields that were provided in the request
+    Object.keys(req.body).forEach(key => {
+      if (req.body[key] !== undefined) {
+        event[key] = req.body[key];
+      }
+    });
+
+    await event.save();
+    res.status(200).send({ message: 'Event updated successfully', event });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+
+// Route to delete an event
+app.delete('/events/:eventId', async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+
+    // If eventId is supposed to be an ObjectId
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ error: 'Invalid event ID format.' });
+    }
+
+    const event = await Event.findOneAndDelete({ _id: eventId }); // Use _id for ObjectId search
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    res.status(200).json({ message: 'Event deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
