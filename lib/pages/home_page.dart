@@ -42,7 +42,7 @@ class HomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SignUpPage(),
+                            builder: (context) => const SignUpPage(),
                           ),
                         );
                       },
@@ -68,7 +68,7 @@ class HomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => LoginPage(),
+                            builder: (context) => const LoginPage(),
                           ),
                         );
                       },
@@ -98,7 +98,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MainPage(selectedIndex: 1),
+                      builder: (context) => const MainPage(selectedIndex: 1),
                     ),
                   );
                 },
@@ -135,7 +135,7 @@ class HomePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ApplyLocationPage(), // Adjust as necessary
+                      builder: (context) => const ApplyLocationPage(), // Adjust as necessary
                     ),
                   );
                 },

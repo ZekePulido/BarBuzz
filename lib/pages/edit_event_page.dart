@@ -7,7 +7,7 @@ import 'package:barbuzz/pages/bar_profile_page.dart'; // Adjust based on your pr
 class EditEventPage extends StatefulWidget {
   final String eventId;
 
-  const EditEventPage({Key? key, required this.eventId}) : super(key: key);
+  const EditEventPage({super.key, required this.eventId});
 
   @override
   _EditEventPageState createState() => _EditEventPageState();
@@ -18,8 +18,8 @@ class _EditEventPageState extends State<EditEventPage> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController imageController = TextEditingController();
-  TextEditingController _startTimeController = TextEditingController(); // Added
-  TextEditingController _endTimeController = TextEditingController(); // Added
+  final TextEditingController _startTimeController = TextEditingController(); // Added
+  final TextEditingController _endTimeController = TextEditingController(); // Added
 
   DateTime? startTime;
   DateTime? endTime;
@@ -88,7 +88,7 @@ class _EditEventPageState extends State<EditEventPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => BarProfilePage(),
+              builder: (context) => const BarProfilePage(),
             ),
           );
         } else {

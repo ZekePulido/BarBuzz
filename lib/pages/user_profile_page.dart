@@ -60,7 +60,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => LoginPage(), // Navigate back to login page
+        builder: (context) => const LoginPage(), // Navigate back to login page
       ),
     );
   }

@@ -36,11 +36,11 @@ class Event {
 
   String getFormattedStartTime() {
     return DateFormat('MMMM dd, yyyy, h:mm a')
-        .format(startTime.toUtc().add(Duration(hours: -6))); // Adjust to CST
+        .format(startTime.toUtc().add(const Duration(hours: -6))); // Adjust to CST
   }
 
   String getFormattedEndTime() {
     return DateFormat('MMMM dd, yyyy, h:mm a')
-        .format(endTime.toUtc().add(Duration(hours: -6))); // Adjust to CST
+        .format(endTime.toUtc().add(const Duration(hours: -6))); // Adjust to CST
   }
 }

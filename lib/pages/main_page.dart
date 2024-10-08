@@ -76,9 +76,9 @@ class _MainPageState extends State<MainPage> {
         controller: _pageController,
         onPageChanged: _onPageChanged,
         children: [
-          LocationsPage(), // Use LocationsPage widget
-          CalendarPage(),  // Use CalendarPage widget
-          _loggedIn ? UserProfilePage() : ProfilePage(), // Conditional page based on login status
+          const LocationsPage(), // Use LocationsPage widget
+          const CalendarPage(),  // Use CalendarPage widget
+          _loggedIn ? const UserProfilePage() : const ProfilePage(), // Conditional page based on login status
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

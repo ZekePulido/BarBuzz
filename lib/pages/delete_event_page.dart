@@ -30,7 +30,7 @@ class DeleteEventPage extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => BarProfilePage(),
+            builder: (context) => const BarProfilePage(),
           ),
         );
       } else {

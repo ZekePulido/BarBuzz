@@ -56,7 +56,7 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => LoginPage(),
+              builder: (context) => const LoginPage(),
             ),
           );
         } else {

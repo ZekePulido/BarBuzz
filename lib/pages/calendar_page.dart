@@ -135,7 +135,7 @@ class _CalendarPageState extends State<CalendarPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FullCalendarPage()),
+                MaterialPageRoute(builder: (context) => const FullCalendarPage()),
               );
             },
             color: Colors.white,

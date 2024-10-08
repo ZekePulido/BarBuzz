@@ -48,14 +48,14 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => BarProfilePage(), // Update this to your bar page
+              builder: (context) => const BarProfilePage(), // Update this to your bar page
             ),
           );
         } else {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => MainPage(selectedIndex: 1),
+              builder: (context) => const MainPage(selectedIndex: 1),
             ),
           );
         }
@@ -210,7 +210,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PasswordResetPage(),
+                                  builder: (context) => const PasswordResetPage(),
                                 ),
                               );
                             },
@@ -232,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SignUpPage(),
+                                  builder: (context) => const SignUpPage(),
                                 ),
                               );
                             },
