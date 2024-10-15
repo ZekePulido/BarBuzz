@@ -4,6 +4,8 @@ import 'dart:convert';
 import '../pages/log_in_page.dart';
 
 class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
@@ -35,7 +37,7 @@ class _SignUpPageState extends State<SignUpPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => LoginPage(),
+          builder: (context) => const LoginPage(),
         ),
       );
     } else {
@@ -74,7 +76,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(220, 255, 179, 0),
+                      color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -111,7 +113,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -143,7 +145,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter password',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -176,7 +178,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter nickname...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -219,7 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => LoginPage(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
@@ -252,7 +254,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     Icons.arrow_back,
                                     color: Colors.white,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
                                     'BACK',
                                     style: TextStyle(

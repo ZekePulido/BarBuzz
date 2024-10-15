@@ -57,13 +57,15 @@ Future<List<Event>> fetchEvents({String? tag}) async {
       throw Exception('Failed to load events');
     }
   } catch (error) {
-    print('Error fetching events: $error');
     return [];
   }
 }
 
 class CalendarPage extends StatefulWidget {
+  const CalendarPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _CalendarPageState createState() => _CalendarPageState();
 }
 
@@ -84,7 +86,7 @@ class _CalendarPageState extends State<CalendarPage> {
       final events = await fetchEvents(tag: tag);
 
       final today = DateTime.now();
-      final tomorrow = DateTime.now().add(Duration(days: 1));
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
 
       setState(() {
         _todayEvents = events.where((event) {
@@ -117,7 +119,7 @@ class _CalendarPageState extends State<CalendarPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Color.fromARGB(220, 255, 179, 0),
+        backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Padding(
           padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on the left
           child: Center(
@@ -129,11 +131,11 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month),
+            icon: const Icon(Icons.calendar_month),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FullCalendarPage()),
+                MaterialPageRoute(builder: (context) => const FullCalendarPage()),
               );
             },
             color: Colors.white,
@@ -146,7 +148,7 @@ class _CalendarPageState extends State<CalendarPage> {
           // Navigation bar below the AppBar
           Container(
             color: Colors.black,
-            padding: EdgeInsets.symmetric(vertical: 8), // Add vertical padding
+            padding: const EdgeInsets.symmetric(vertical: 8), // Add vertical padding
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -181,16 +183,16 @@ class _CalendarPageState extends State<CalendarPage> {
                               return ListTile(
                                 title: Text(
                                   event.title,
-                                  style: TextStyle(color: Colors.white),
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                                 subtitle: Text(
                                   '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
                               );
                             },
                           )
-                        : Center(
+                        : const Center(
                             child: Text(
                               'No events for today',
                               style: TextStyle(color: Colors.white),
@@ -216,16 +218,16 @@ class _CalendarPageState extends State<CalendarPage> {
                               return ListTile(
                                 title: Text(
                                   event.title,
-                                  style: TextStyle(color: Colors.white),
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                                 subtitle: Text(
                                   '${event.locationName} • ${event.formattedStartTime} - ${event.formattedEndTime}',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
                               );
                             },
                           )
-                        : Center(
+                        : const Center(
                             child: Text(
                               'No events for tomorrow',
                               style: TextStyle(color: Colors.white),
@@ -247,7 +249,7 @@ class _CalendarPageState extends State<CalendarPage> {
     return GestureDetector(
       onTap: () => _onTagSelected(tag),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add padding for better touch area
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add padding for better touch area
         decoration: BoxDecoration(
           color: isSelected ? Colors.yellow.withOpacity(0.2) : Colors.transparent, // Highlight background
           borderRadius: BorderRadius.circular(8), // Rounded corners for the highlight
@@ -256,7 +258,7 @@ class _CalendarPageState extends State<CalendarPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: isSelected ? Colors.yellow : Colors.grey), // Highlight icon
-            SizedBox(height: 4), // Add spacing between icon and label
+            const SizedBox(height: 4), // Add spacing between icon and label
             Text(
               label,
               style: TextStyle(

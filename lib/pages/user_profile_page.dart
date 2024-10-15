@@ -5,13 +5,15 @@ import 'package:http/http.dart' as http;
 import 'package:barbuzz/pages/log_in_page.dart'; // Ensure this import is correct
 
 class UserProfilePage extends StatefulWidget {
+  const UserProfilePage({super.key});
+
   @override
   _UserProfilePageState createState() => _UserProfilePageState();
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
   String _username = 'Loading...';
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -58,7 +60,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => LoginPage(), // Navigate back to login page
+        builder: (context) => const LoginPage(), // Navigate back to login page
       ),
     );
   }
@@ -87,22 +89,22 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
             ),
           ),
-          Spacer(), // Spacer widget to push logout button to the bottom
+          const Spacer(), // Spacer widget to push logout button to the bottom
           // Logout button
           Padding(
             padding: EdgeInsets.all(screenWidth * 0.05), // Padding around the button
             child: ElevatedButton(
               onPressed: _logout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(220, 255, 179, 0), // Background color of the button
+                backgroundColor: const Color.fromARGB(220, 255, 179, 0), // Background color of the button
                 padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02, horizontal: screenWidth * 0.1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min, // Makes the Row only as wide as its content
                 children: [
-                  Icon(Icons.directions_run_outlined, color: Colors.white), // Add icon to the button
+                  const Icon(Icons.directions_run_outlined, color: Colors.white), // Add icon to the button
                   SizedBox(width: screenWidth * 0.02), // Space between the icon and text
-                  Text(
+                  const Text(
                     'LOG OUT',
                     style: TextStyle(
                       color: Colors.white, // Text color of the button

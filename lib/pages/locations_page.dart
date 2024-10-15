@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../utils/location_card.dart';
 import '../pages/bar_page.dart';
 
@@ -29,6 +29,8 @@ class Location {
 }
 
 class LocationsPage extends StatefulWidget {
+  const LocationsPage({super.key});
+
   @override
   _LocationsPageState createState() => _LocationsPageState();
 }
@@ -61,7 +63,7 @@ class _LocationsPageState extends State<LocationsPage> {
         builder: (context) => BarPage(
           imagePath: location.image,
           locationId: location.id,
-          locationName: location.location, // Pass the location name
+          locationName: location.location,
         ),
       ),
     );
@@ -74,77 +76,78 @@ class _LocationsPageState extends State<LocationsPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  final screenSize = MediaQuery.of(context).size;
-  final double searchBarHeight = screenSize.height * 0.07;
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final double searchBarHeight = screenSize.height * 0.07;
 
-  return Scaffold(
-    backgroundColor: Colors.black,
-    body: Padding(
-      padding: EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: searchBarHeight,
-              child: Container(
-                padding: EdgeInsets.all(4),
-                color: Colors.black,
-                child: TextField(
-                  onChanged: _onSearchQueryChanged,
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                    hintText: 'Search...',
-                    hintStyle: TextStyle(color: Colors.white70),
-                    prefixIcon: Icon(Icons.search, color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.white24,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: searchBarHeight,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  color: Colors.black,
+                  child: TextField(
+                    onChanged: _onSearchQueryChanged,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                      hintText: 'Search...',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      prefixIcon: const Icon(Icons.search, color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.white24,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
+                    style: const TextStyle(color: Colors.white),
                   ),
-                  style: TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-            SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
 
-            FutureBuilder<List<Location>>(
-              future: _locations,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No locations available.'));
-                } else {
-                  final locations = snapshot.data!
-                      .where((location) => location.location
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()))
-                      .toList();
+              FutureBuilder<List<Location>>(
+                future: _locations,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No locations available.'));
+                  } else {
+                    final locations = snapshot.data!
+                        .where((location) => location.location
+                            .toLowerCase()
+                            .contains(_searchQuery.toLowerCase()))
+                        .toList();
 
-                  return Column(
-                    children: locations.map((location) {
-                      return LocationCard(
-                        imagePath: location.image.isNotEmpty ? location.image : 'https://via.placeholder.com/150', // Default image
-                        location: location.location.isNotEmpty ? location.location : 'Unknown Location', // Default name
-                        locationId: location.id,
-                        onTap: () => _navigateToBarPage(location),
-                      );
-                    }).toList(),
-                  );
-                }
-              },
-            ),
-          ],
+                    return Column(
+                      children: locations.map((location) {
+                        return LocationCard(
+                          imagePath: location.image.isNotEmpty
+                              ? location.image // Pass the image URL as a string
+                              : 'assets/logos/BarBee.png', // Use the path to the asset as a fallback
+                          location: location.location.isNotEmpty ? location.location : 'Unknown Location',
+                          locationId: location.id,
+                          onTap: () => _navigateToBarPage(location),
+                        );
+                      }).toList(),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 }

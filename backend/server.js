@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const port = 3000;
@@ -28,8 +29,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve i
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  nickname: String,
+  email: String, // New field for email
+  confirmEmail: String, // New field for email confirmation
+  venueAddress: String, // New field for venue address
+  venueName: String, // New field for venue name
+  venueDescription: String, // New field for venue description
+  venueWebsite: String, // New field for venue website
+  type: Number, // 1 for bar, 0 for signup
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
+  location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' }
 });
 
 const eventSchema = new mongoose.Schema({
@@ -69,16 +77,48 @@ const upload = multer({
 
 // Sign Up Route
 app.post('/signup', async (req, res) => {
-  const { username, password, nickname } = req.body;
+  const { username, password, email, confirmEmail, venueAddress, venueName, venueDescription, venueWebsite, type } = req.body;
   try {
+    // Basic validation
+    if (email !== confirmEmail) {
+      return res.status(400).send({ error: 'Emails do not match' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword, nickname });
+    let locationId;
+
+     // Create a location only if the user type is 1
+     if (type === 1) {
+      const location = new Location({
+        location: venueName, // Use the venue name for the location
+        address: venueAddress,
+        description: venueDescription,
+        // Optionally include an image if provided
+      });
+
+      await location.save();
+      locationId = location._id; // Store the newly created location ID
+    }
+
+    const user = new User({ 
+      username, 
+      password: hashedPassword, 
+      email,
+      confirmEmail,
+      venueAddress,
+      venueName,
+      venueDescription,
+      venueWebsite,
+      type,
+      location: locationId ? locationId : null,
+    });
     await user.save();
     res.status(201).send({ message: 'User created successfully' });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 // Login Route
 app.post('/login', async (req, res) => {
@@ -91,7 +131,7 @@ app.post('/login', async (req, res) => {
     if (!match) return res.status(400).send({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
-    res.status(200).send({ message: 'Login successful', token });
+    res.status(200).send({ message: 'Login successful', token, type: user.type });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
@@ -113,17 +153,101 @@ const authenticateToken = (req, res, next) => {
 // Route to get user profile
 app.get('/profile', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.user.username });
+    const user = await User.findOne({ username: req.user.username }).populate('location');
     if (!user) return res.status(404).send({ error: 'User not found' });
 
-    res.status(200).send({
+    // Prepare the user profile data
+    const userProfile = {
       username: user.username,
-      nickname: user.nickname,
+      email: user.email,
+      venueAddress: user.venueAddress,
+      venueName: user.venueName,
+      venueDescription: user.venueDescription,
+      venueWebsite: user.venueWebsite,
+      type: user.type,
+      favorites: user.favorites,
+      location: user.location,
+    };
+
+    res.status(200).send(userProfile);
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
+
+
+app.get('/bar-profile', authenticateToken, async (req, res) => {
+  try {
+    const bar = await User.findOne({ username: req.user.username }).populate('location');
+    if (!bar) return res.status(404).send({ error: 'Bar not found' });
+
+    if (!bar.location) return res.status(404).send({ error: 'Location not found for this bar' });
+
+    // Fetch the events for the bar's location
+    const events = await Event.find({ location: bar.location._id });
+
+    // Convert image path to a full URL if necessary
+    const eventsWithFullImageUrls = events.map(event => ({
+      _id: event._id, // Include event ID
+      title: event.title,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      tag: event.tag,
+      description: event.description,
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : '',
+      locationName: event.locationName,
+    }));
+
+    res.status(200).send({
+      venueName: bar.venueName,
+      venueAddress: bar.venueAddress,
+      venueDescription: bar.venueDescription,
+      locationId: bar.location._id,
+      events: eventsWithFullImageUrls, // Include events in the response
     });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.put('/profile', authenticateToken, async (req, res) => {
+  const { username, email, venueAddress, venueName, venueDescription, venueWebsite } = req.body;
+
+  try {
+    // Update user details based on the authenticated user's username (or ID)
+    const updatedUser = await User.findOneAndUpdate(
+      { username: req.user.username }, // Query to find the user
+      { // Update object
+        username,
+        email,
+        venueAddress,
+        venueName,
+        venueDescription,
+        venueWebsite,
+      },
+      { new: true, useFindAndModify: false } // Options to return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate a new JWT token with the updated username
+    const token = jwt.sign({ username: updatedUser.username }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: updatedUser,
+      token // Include the new token in the response
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+
+
 
 // Route to add or remove a favorite location
 app.post('/favorites', authenticateToken, async (req, res) => {
@@ -212,6 +336,31 @@ app.get('/events', async (req, res) => {
   }
 });
 
+// Route to get event by event ID
+app.get('/events/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  // Validate if the provided event ID is valid
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).send({ error: 'Invalid event ID' });
+  }
+
+  try {
+    const event = await Event.findById(eventId); // Removed .populate('location') to keep the response lightweight
+    if (!event) return res.status(404).send({ error: 'Event not found' });
+
+    // Prepare the event data, including a full image URL
+    const eventWithFullImageUrl = {
+      ...event.toObject(),
+      image: event.image ? `http://10.0.2.2:${port}/${event.image.replace('\\', '/')}` : ''
+    };
+
+    res.status(200).send(eventWithFullImageUrl); // Send event details as a response
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+});
+
 // Route to get events by a specific date
 app.get('/events/:date', async (req, res) => {
   const { date } = req.params;
@@ -250,6 +399,54 @@ app.get('/events/tag/:tag', async (req, res) => {
     res.status(200).send({ events: eventsWithFullImageUrls });
   } catch (err) {
     res.status(400).send({ error: err.message });
+  }
+});
+
+// Route to update an event
+app.put('/events/:eventId', async (req, res) => {
+  const { eventId } = req.params;
+
+  // Validate if the provided event ID is valid
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    return res.status(400).send({ error: 'Invalid event ID' });
+  }
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).send({ error: 'Event not found' });
+
+    // Update only the fields that were provided in the request
+    Object.keys(req.body).forEach(key => {
+      if (req.body[key] !== undefined) {
+        event[key] = req.body[key];
+      }
+    });
+
+    await event.save();
+    res.status(200).send({ message: 'Event updated successfully', event });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+
+// Route to delete an event
+app.delete('/events/:eventId', async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+
+    // If eventId is supposed to be an ObjectId
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ error: 'Invalid event ID format.' });
+    }
+
+    const event = await Event.findOneAndDelete({ _id: eventId }); // Use _id for ObjectId search
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    res.status(200).json({ message: 'Event deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -327,6 +524,37 @@ app.get('/locations/:id/events', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.put('/location/:id', authenticateToken, async (req, res) => {
+  const { id: locationId } = req.params; // Extract locationId from the request URL
+  const { location, address, description } = req.body;
+
+  try {
+    // Update location details using the locationId from params
+    const updatedLocation = await Location.findOneAndUpdate(
+      { _id: locationId }, // Query to find the location by its ID
+      { // Update fields
+        location: location,
+        description: description,
+        address: address
+      },
+      { new: true, useFindAndModify: false } // Options to return the updated document
+    );
+
+    if (!updatedLocation) {
+      return res.status(404).json({ error: 'Location not found' });
+    }
+
+    res.status(200).json({
+      message: 'Location updated successfully',
+      location: updatedLocation
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
 
 // Start the server
 app.listen(port, () => {

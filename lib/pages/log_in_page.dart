@@ -4,9 +4,12 @@ import 'package:http/http.dart' as http;
 import '../pages/main_page.dart';
 import '../pages/sign_up_page.dart';
 import '../pages/password_reset_page.dart';
+import '../pages/bar_profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -15,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<void> _login() async {
     final username = _usernameController.text;
@@ -23,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/login'), // Use appropriate IP for emulator or device
+        Uri.parse('http://10.0.2.2:3000/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -36,27 +39,35 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final userType = data['type'];
 
         await _storage.write(key: 'auth_token', value: token);
 
-        // Navigate to the main page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainPage(selectedIndex: 1),
-          ),
-        );
+        // Navigate based on user type
+        if (userType == 1) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BarProfilePage(), // Update this to your bar page
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MainPage(selectedIndex: 1),
+            ),
+          );
+        }
       } else {
-        // Show error message
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['error'])),
         );
       }
     } catch (e) {
-      // Handle network errors or JSON parsing errors
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred. Please try again.')),
+        const SnackBar(content: Text('An error occurred. Please try again.')),
       );
     }
   }
@@ -90,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                   Container(
                     padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
-                      color: Color.fromARGB(220, 255, 179, 0),
+                      color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -113,7 +124,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -127,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -145,7 +155,6 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -159,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter password...',
-                            hintStyle: TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
@@ -188,9 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: const Text(
                                 'Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
@@ -203,7 +210,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => PasswordResetPage(),
+                                  builder: (context) => const PasswordResetPage(),
                                 ),
                               );
                             },
@@ -225,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SignUpPage(),
+                                  builder: (context) => const SignUpPage(),
                                 ),
                               );
                             },
@@ -251,19 +258,14 @@ class _LoginPageState extends State<LoginPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 8),
+                                  Icon(Icons.arrow_back, color: Colors.white),
+                                  SizedBox(width: 8),
                                   Text(
                                     'BACK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ],
                               ),
