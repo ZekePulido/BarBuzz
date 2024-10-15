@@ -59,7 +59,7 @@ class EventDetailsPage extends StatelessWidget {
               ),
             const SizedBox(height: 8),
             Text(
-              '${event.getFormattedStartTime} - ${event.getFormattedEndTime}',
+              '${event.getFormattedStartTime()} - ${event.getFormattedEndTime()}',
               style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),

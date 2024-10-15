@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:barbuzz/pages/create_events_page.dart';
 import 'package:barbuzz/pages/delete_event_page.dart';
 import 'package:barbuzz/pages/edit_event_page.dart';
+import 'package:barbuzz/pages/edit_location_page.dart';
 import 'package:barbuzz/pages/log_in_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -54,6 +55,8 @@ class _BarProfilePageState extends State<BarProfilePage> {
           venueDescription = data['venueDescription'];
           locationId = data['locationId'];
         });
+
+        print(token);
 
         // Fetch upcoming events after profile data is fetched
         _events = fetchEventsForLocation(locationId); // Pass locationId properly
@@ -130,7 +133,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ApplyLocationPage(),
+                      builder: (context) => EditLocationPage(),
                     ),
                   );
                   break;

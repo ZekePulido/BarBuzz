@@ -16,13 +16,16 @@ class CreateEventsPage extends StatefulWidget {
 class _CreateEventsPageState extends State<CreateEventsPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _eventTitleController = TextEditingController();
-  final TextEditingController _eventDescriptionController = TextEditingController();
+  final TextEditingController _eventDescriptionController =
+      TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
-  
+
+  DateTime? _startDateTime;
+  DateTime? _endDateTime;
+
   List<String> selectedTags = [];
   final List<String> tagOptions = ['Drinks', 'Food', 'Events'];
-
 
   @override
   void dispose() {
@@ -33,38 +36,45 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
     super.dispose();
   }
 
- Future<void> _createEvent() async {
+Future<void> _createEvent() async {
   final title = _eventTitleController.text;
   final description = _eventDescriptionController.text;
-  final startTime = _startTimeController.text;
-  final endTime = _endTimeController.text;
 
+  if (_startDateTime == null || _endDateTime == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please select valid start and end times')),
+    );
+    return;
+  }
+
+  // Subtract 5 hours for CST (Central Standard Time)
+  final updatedStartTime = _startDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String();
+  final updatedEndTime = _endDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String();
   final String tag = selectedTags.isNotEmpty ? selectedTags.first : '';
+
+  final Map<String, String> body = {
+    'title': title,
+    'description': description,
+    'startTime': updatedStartTime,
+    'endTime': updatedEndTime,  
+    'location': widget.locationId,
+    'tag': tag,
+  };
 
   try {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/events'), // Ensure the correct IP and port are used
+      Uri.parse('http://10.0.2.2:3000/events'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
-        'title': title,
-        'description': description,
-        'startTime': startTime,
-        'endTime': endTime,
-        'location': widget.locationId,
-        'tag': tag,
-      }),
+      body: jsonEncode(body),
     );
-
-    // Log the response status code and body
-
 
     if (response.statusCode == 201) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const BarProfilePage(), // Ensure BarProfilePage exists
+          builder: (context) => const BarProfilePage(),
         ),
       );
     } else {
@@ -73,14 +83,15 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
       );
     }
   } catch (e) {
+    print('Error: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error: $e')),
     );
   }
 }
 
-
-  Future<void> _selectDateTime(BuildContext context, TextEditingController controller) async {
+  Future<void> _selectDateTime(BuildContext context,
+      TextEditingController controller, bool isStartTime) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -95,18 +106,46 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
       );
 
       if (pickedTime != null) {
+        // Create a full DateTime object
         final DateTime fullDateTime = DateTime(
           pickedDate.year,
           pickedDate.month,
           pickedDate.day,
-          pickedTime.hour, // Use the 24-hour format for clarity
+          pickedTime.hour,
           pickedTime.minute,
         );
 
-        final formattedDateTime = DateFormat('MM/dd/yyyy hh:mm a').format(fullDateTime);
-        controller.text = formattedDateTime;
+        // Adjust to Central Standard Time (CST) by subtracting 5 hours
+        final DateTime cstDateTime = fullDateTime.subtract(const Duration(hours: 5));
+
+        // Store the UTC time in the controller for posting
+        controller.text = DateFormat('yyyy-MM-dd HH:mm').format(cstDateTime);
+
+        // Update the displayed time in the text field using the desired format
+        setState(() {
+          if (isStartTime) {
+            _startDateTime = fullDateTime; // Store the full date-time object
+            _startTimeController.text =
+                getFormattedStartTime(); // Display formatted time
+          } else {
+            _endDateTime = fullDateTime;
+            _endTimeController.text = getFormattedEndTime();
+          }
+        });
       }
     }
+  }
+
+  String getFormattedStartTime() {
+    return _startDateTime != null
+        ? DateFormat('MMMM dd, yyyy, h:mm a').format(_startDateTime!)
+        : '';
+  }
+
+  String getFormattedEndTime() {
+    return _endDateTime != null
+        ? DateFormat('MMMM dd, yyyy, h:mm a').format(_endDateTime!)
+        : '';
   }
 
   @override
@@ -167,7 +206,8 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter event title...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -192,7 +232,8 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter event description...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -218,13 +259,16 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Select start time...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today, color: Colors.grey),
-                              onPressed: () => _selectDateTime(context, _startTimeController),
+                              icon: const Icon(Icons.calendar_today,
+                                  color: Colors.grey),
+                              onPressed: () => _selectDateTime(
+                                  context, _startTimeController, true),
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
@@ -238,6 +282,7 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                           },
                           readOnly: true,
                         ),
+
                         SizedBox(height: screenHeight * 0.02),
 
                         // End Time
@@ -248,13 +293,16 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Select end time...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today, color: Colors.grey),
-                              onPressed: () => _selectDateTime(context, _endTimeController),
+                              icon: const Icon(Icons.calendar_today,
+                                  color: Colors.grey),
+                              onPressed: () =>
+                                  _selectDateTime(context, _endTimeController, false),
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
@@ -270,40 +318,37 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
 
-                        // Tags Dropdown
+                        // Tags Selection
                         DropdownButtonFormField<String>(
-                          value: selectedTags.isNotEmpty ? selectedTags.first : null,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
                             ),
                           ),
+                          value: selectedTags.isNotEmpty
+                              ? selectedTags.first
+                              : null,
+                          hint: const Text('Select tag'),
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedTags = [newValue!];
+                            });
+                          },
                           items: tagOptions.map((String tag) {
                             return DropdownMenuItem<String>(
                               value: tag,
                               child: Text(tag),
                             );
                           }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedTags = newValue != null ? [newValue] : [];
-                            });
-                          },
-                          hint: const Text("Select a tag"),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please select a tag';
-                            }
-                            return null;
-                          },
                         ),
-                        SizedBox(height: screenHeight * 0.03),
+                        SizedBox(height: screenHeight * 0.04),
 
                         // Submit Button
                         Align(
@@ -315,18 +360,17 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
                               padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1,
-                                vertical: screenHeight * 0.02,
+                                horizontal: screenWidth * 0.15,
+                                vertical: screenHeight * 0.015,
                               ),
+                              backgroundColor: Colors.black,
                             ),
                             child: Text(
                               'Create Event',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                                fontSize: screenWidth * 0.05,
                               ),
                             ),
                           ),

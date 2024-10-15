@@ -8,7 +8,7 @@ class Event {
   final String image;
   final String? description;
   final String? locationName;
-  final String? tag; 
+  final String? tag;
 
   Event({
     required this.eventId,
@@ -18,7 +18,7 @@ class Event {
     this.image = '',
     this.description,
     this.locationName,
-    this.tag, 
+    this.tag,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -30,17 +30,15 @@ class Event {
       image: json['image'] ?? '',
       description: json['description'],
       locationName: json['locationName'],
-      tag: json['tag'], 
+      tag: json['tag'],
     );
   }
 
   String getFormattedStartTime() {
-    return DateFormat('MMMM dd, yyyy, h:mm a')
-        .format(startTime.toUtc().add(const Duration(hours: -6))); // Adjust to CST
+    return DateFormat('MMMM dd, yyyy, h:mm a').format(startTime);
   }
 
   String getFormattedEndTime() {
-    return DateFormat('MMMM dd, yyyy, h:mm a')
-        .format(endTime.toUtc().add(const Duration(hours: -6))); // Adjust to CST
+    return DateFormat('MMMM dd, yyyy, h:mm a').format(endTime);
   }
 }

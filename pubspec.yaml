@@ -23,6 +23,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.2.14
 
 flutter:
   uses-material-design: true
@@ -32,3 +33,9 @@ flutter:
     - assets/logos/BarBuzz.png
     - assets/logos/arepas.jpg
     - assets/logos/boardtown.jpg
+
+flutter_native_splash:
+  color: "#0063dd"
+  image: assets/logo.png # Make sure this logo.png exists in the assets folder
+  android: true
+  ios: true

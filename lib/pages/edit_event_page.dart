@@ -18,15 +18,17 @@ class _EditEventPageState extends State<EditEventPage> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController imageController = TextEditingController();
-  final TextEditingController _startTimeController = TextEditingController(); // Added
-  final TextEditingController _endTimeController = TextEditingController(); // Added
+  final TextEditingController _startTimeController = TextEditingController();
+  final TextEditingController _endTimeController = TextEditingController();
 
-  DateTime? startTime;
-  DateTime? endTime;
+  DateTime? _startDateTime;
+  DateTime? _endDateTime;
+  DateTime? _originalStartTime;
+  DateTime? _originalEndTime;
   bool isLoading = true;
 
-  String? selectedTag; // Store the selected tag
-  final List<String> tagOptions = ['Drinks', 'Food', 'Events']; // Tag options
+  String? selectedTag;
+  final List<String> tagOptions = ['Drinks', 'Food', 'Events'];
 
   @override
   void initState() {
@@ -46,13 +48,15 @@ class _EditEventPageState extends State<EditEventPage> {
           titleController.text = data['title'] ?? '';
           descriptionController.text = data['description'] ?? '';
           imageController.text = data['image'] ?? '';
-          startTime = DateTime.parse(data['startTime']);
-          endTime = DateTime.parse(data['endTime']);
+          _startDateTime = DateTime.parse(data['startTime']);
+          _endDateTime = DateTime.parse(data['endTime']);
           _startTimeController.text =
-              DateFormat('yyyy-MM-dd – kk:mm').format(startTime!);
+              DateFormat('MMMM dd, yyyy, h:mm a').format(_startDateTime!);
           _endTimeController.text =
-              DateFormat('yyyy-MM-dd – kk:mm').format(endTime!);
-          selectedTag = data['tag']; // Set the tag for the dropdown
+              DateFormat('MMMM dd, yyyy, h:mm a').format(_endDateTime!);
+          _originalStartTime = _startDateTime;
+          _originalEndTime = _endDateTime;
+          selectedTag = data['tag'];
           isLoading = false;
         });
       } else {
@@ -70,6 +74,18 @@ class _EditEventPageState extends State<EditEventPage> {
 
   Future<void> _submitEventUpdate() async {
     if (_formKey.currentState!.validate()) {
+      // Subtract 5 hours from the updated times if they were modified, otherwise subtract 12 hours if the original times are used.
+      final updatedStartTime = _startDateTime != _originalStartTime
+          ? _startDateTime!
+              .subtract(const Duration(hours: 5))
+              .toUtc()
+              .toIso8601String()
+          : _startDateTime!.toUtc().toIso8601String();
+
+      final updatedEndTime = _endDateTime != _originalEndTime
+          ? _endDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String()
+          : _endDateTime!.toUtc().toIso8601String();
+
       try {
         final response = await http.put(
           Uri.parse('http://10.0.2.2:3000/events/${widget.eventId}'),
@@ -77,10 +93,9 @@ class _EditEventPageState extends State<EditEventPage> {
           body: jsonEncode({
             'title': titleController.text,
             'description': descriptionController.text,
-            'image': imageController.text,
-            'startTime': startTime?.toIso8601String(),
-            'endTime': endTime?.toIso8601String(),
-            'tag': selectedTag, // Send the selected tag
+            'startTime': updatedStartTime,
+            'endTime': updatedEndTime,
+            'tag': selectedTag,
           }),
         );
 
@@ -104,44 +119,62 @@ class _EditEventPageState extends State<EditEventPage> {
     }
   }
 
-  Future<void> _pickDateTime(BuildContext context,
-      {required TextEditingController controller,
-      bool isStartTime = true}) async {
-    final initialDate =
-        isStartTime ? startTime ?? DateTime.now() : endTime ?? DateTime.now();
-    final date = await showDatePicker(
+  Future<void> _selectDateTime(BuildContext context,
+      TextEditingController controller, bool isStartTime) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2000),
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2022),
       lastDate: DateTime(2100),
     );
 
-    if (date != null) {
-      final time = await showTimePicker(
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.fromDateTime(initialDate),
+        initialTime: TimeOfDay.now(),
       );
 
-      if (time != null) {
-        final selectedDateTime = DateTime(
-          date.year,
-          date.month,
-          date.day,
-          time.hour,
-          time.minute,
+      if (pickedTime != null) {
+        // Create a full DateTime object
+        final DateTime fullDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
         );
 
+        // Adjust to Central Standard Time (CST) by subtracting 5 hours
+        final DateTime cstDateTime = fullDateTime.subtract(const Duration(hours: 5));
+
+        // Store the UTC time in the controller for posting
+        controller.text = DateFormat('yyyy-MM-dd HH:mm').format(cstDateTime);
+
+        // Update the displayed time in the text field using the desired format
         setState(() {
           if (isStartTime) {
-            startTime = selectedDateTime;
+            _startDateTime = fullDateTime; // Store the full date-time object
+            _startTimeController.text =
+                getFormattedStartTime(); // Display formatted time
           } else {
-            endTime = selectedDateTime;
+            _endDateTime = fullDateTime;
+            _endTimeController.text = getFormattedEndTime();
           }
-          controller.text =
-              DateFormat('yyyy-MM-dd – kk:mm').format(selectedDateTime);
         });
       }
     }
+  }
+
+  String getFormattedStartTime() {
+    return _startDateTime != null
+        ? DateFormat('MMMM dd, yyyy, h:mm a').format(_startDateTime!)
+        : '';
+  }
+
+  String getFormattedEndTime() {
+    return _endDateTime != null
+        ? DateFormat('MMMM dd, yyyy, h:mm a').format(_endDateTime!)
+        : '';
   }
 
   @override
@@ -191,8 +224,6 @@ class _EditEventPageState extends State<EditEventPage> {
                             ),
                           ),
                           SizedBox(height: screenHeight * 0.02),
-
-                          // Event Title
                           TextFormField(
                             controller: titleController,
                             decoration: InputDecoration(
@@ -217,8 +248,6 @@ class _EditEventPageState extends State<EditEventPage> {
                             },
                           ),
                           SizedBox(height: screenHeight * 0.02),
-
-                          // Event Description
                           TextFormField(
                             controller: descriptionController,
                             decoration: InputDecoration(
@@ -238,8 +267,6 @@ class _EditEventPageState extends State<EditEventPage> {
                             maxLines: 3,
                           ),
                           SizedBox(height: screenHeight * 0.02),
-                          
-                          // Tag Dropdown
                           DropdownButtonFormField<String>(
                             value: selectedTag,
                             items: tagOptions
@@ -275,8 +302,6 @@ class _EditEventPageState extends State<EditEventPage> {
                             },
                           ),
                           SizedBox(height: screenHeight * 0.02),
-
-                          // Start Time
                           TextFormField(
                             controller: _startTimeController,
                             decoration: InputDecoration(
@@ -294,18 +319,13 @@ class _EditEventPageState extends State<EditEventPage> {
                               ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.calendar_today),
-                                onPressed: () {
-                                  _pickDateTime(context,
-                                      controller: _startTimeController,
-                                      isStartTime: true);
-                                },
+                                onPressed: () => _selectDateTime(
+                                    context, _startTimeController, true),
                               ),
                             ),
                             readOnly: true,
                           ),
                           SizedBox(height: screenHeight * 0.02),
-
-                          // End Time
                           TextFormField(
                             controller: _endTimeController,
                             decoration: InputDecoration(
@@ -323,36 +343,35 @@ class _EditEventPageState extends State<EditEventPage> {
                               ),
                               suffixIcon: IconButton(
                                 icon: const Icon(Icons.calendar_today),
-                                onPressed: () {
-                                  _pickDateTime(context,
-                                      controller: _endTimeController,
-                                      isStartTime: false);
-                                },
+                                onPressed: () => _selectDateTime(
+                                    context, _endTimeController, false),
                               ),
                             ),
                             readOnly: true,
                           ),
                           SizedBox(height: screenHeight * 0.02),
-
-                          // Submit Button
                           Align(
                             alignment: Alignment.center,
                             child: ElevatedButton(
                               onPressed: _submitEventUpdate,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
+                               backgroundColor: Colors.black,
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.1,
+                                  horizontal: screenWidth * 0.04,
                                   vertical: screenHeight * 0.02,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
                               child: Text(
-                              'Update Event',
-                               style: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),),
+                                'Update Event',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.05,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
                         ],

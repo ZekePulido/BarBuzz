@@ -153,17 +153,28 @@ const authenticateToken = (req, res, next) => {
 // Route to get user profile
 app.get('/profile', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.user.username });
+    const user = await User.findOne({ username: req.user.username }).populate('location');
     if (!user) return res.status(404).send({ error: 'User not found' });
 
-    res.status(200).send({
+    // Prepare the user profile data
+    const userProfile = {
       username: user.username,
-      nickname: user.nickname,
-    });
+      email: user.email,
+      venueAddress: user.venueAddress,
+      venueName: user.venueName,
+      venueDescription: user.venueDescription,
+      venueWebsite: user.venueWebsite,
+      type: user.type,
+      favorites: user.favorites,
+      location: user.location,
+    };
+
+    res.status(200).send(userProfile);
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 app.get('/bar-profile', authenticateToken, async (req, res) => {
   try {
@@ -198,6 +209,44 @@ app.get('/bar-profile', authenticateToken, async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.put('/profile', authenticateToken, async (req, res) => {
+  const { username, email, venueAddress, venueName, venueDescription, venueWebsite } = req.body;
+
+  try {
+    // Update user details based on the authenticated user's username (or ID)
+    const updatedUser = await User.findOneAndUpdate(
+      { username: req.user.username }, // Query to find the user
+      { // Update object
+        username,
+        email,
+        venueAddress,
+        venueName,
+        venueDescription,
+        venueWebsite,
+      },
+      { new: true, useFindAndModify: false } // Options to return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate a new JWT token with the updated username
+    const token = jwt.sign({ username: updatedUser.username }, JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: updatedUser,
+      token // Include the new token in the response
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+
 
 
 // Route to add or remove a favorite location
@@ -475,6 +524,37 @@ app.get('/locations/:id/events', async (req, res) => {
     res.status(400).send({ error: err.message });
   }
 });
+
+app.put('/location/:id', authenticateToken, async (req, res) => {
+  const { id: locationId } = req.params; // Extract locationId from the request URL
+  const { location, address, description } = req.body;
+
+  try {
+    // Update location details using the locationId from params
+    const updatedLocation = await Location.findOneAndUpdate(
+      { _id: locationId }, // Query to find the location by its ID
+      { // Update fields
+        location: location,
+        description: description,
+        address: address
+      },
+      { new: true, useFindAndModify: false } // Options to return the updated document
+    );
+
+    if (!updatedLocation) {
+      return res.status(404).json({ error: 'Location not found' });
+    }
+
+    res.status(200).json({
+      message: 'Location updated successfully',
+      location: updatedLocation
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
 
 // Start the server
 app.listen(port, () => {
