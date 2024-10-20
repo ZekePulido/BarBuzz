@@ -210,12 +210,12 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PasswordResetPage(),
+                                  builder: (context) => const ForgotUsernamePage(),
                                 ),
                               );
                             },
                             child: Text(
-                              'FORGOT PASSWORD?',
+                              'FORGOT USERNAME?',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.03,
                                 color: Colors.white,

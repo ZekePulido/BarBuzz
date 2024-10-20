@@ -1,19 +1,54 @@
-import 'package:barbuzz/pages/log_in_page.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class PasswordResetPage extends StatefulWidget {
-  const PasswordResetPage({super.key});
+class ForgotUsernamePage extends StatefulWidget {
+  const ForgotUsernamePage({super.key});
 
   @override
-  _PasswordResetPageState createState() => _PasswordResetPageState();
+  _ForgotUsernamePageState createState() => _ForgotUsernamePageState();
 }
 
-class _PasswordResetPageState extends State<PasswordResetPage> {
-  final _formKey = GlobalKey<FormState>(); 
+class _ForgotUsernamePageState extends State<ForgotUsernamePage> {
+  final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmNewPasswordController = TextEditingController();
+  String? _username; // Store the retrieved username
+  String? _error; // Store any error messages
+
+  Future<void> _retrieveUsername() async {
+    final email = _emailController.text;
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/forgot-username/$email'),
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the response and retrieve the username
+        final data = jsonDecode(response.body);
+        setState(() {
+          _username = data['username']; // Update the username state
+          _error = null; // Clear any previous error
+        });
+      } else if (response.statusCode == 404) {
+        setState(() {
+          _error = 'User not found'; // Handle user not found case
+          _username = null;
+        });
+      } else {
+        setState(() {
+          _error = 'An error occurred'; // Generic error handling
+          _username = null;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to connect to the server'; // Handle connection errors
+        _username = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,28 +58,35 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
+        padding:
+            EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: screenWidth * 0.8), // Constrain max width to 80% of screen width
+            constraints: BoxConstraints(
+                maxWidth: screenWidth *
+                    0.8), // Constrain max width to 80% of screen width
             child: Form(
               key: _formKey, // Assign the form key here
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Centered "Password Reset" Text
-                   Text(
+                  // Centered "BARBUZZ" Text
+                  Text(
                     "BARBUZZ",
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: screenWidth * 0.10, // Font size as 10% of screen width
+                      fontSize: screenWidth *
+                          0.10, // Font size as 10% of screen width
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                  
+                  SizedBox(
+                      height: screenHeight *
+                          0.02), // Spacing as 2% of screen height
+
                   Container(
-                    padding: EdgeInsets.all(screenWidth * 0.04), // Padding as 4% of screen width
+                    padding: EdgeInsets.all(
+                        screenWidth * 0.04), // Padding as 4% of screen width
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
@@ -55,10 +97,11 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                         Align(
                           alignment: Alignment.center,
                           child: Text(
-                            'Password Reset',
+                            'Forgot Username',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: screenWidth * 0.06, // Font size as 6% of screen width
+                              fontSize: screenWidth *
+                                  0.06, // Font size as 6% of screen width
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -68,24 +111,30 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                           'Email',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04, // Font size as 4% of screen width
+                            fontSize: screenWidth *
+                                0.04, // Font size as 4% of screen width
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.01), // Space between label and text field as 1% of screen height
+                        SizedBox(
+                            height: screenHeight *
+                                0.01), // Space between label and text field as 1% of screen height
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
                             filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
+                            fillColor:
+                                Colors.white, // Set background color to white
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter your email...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04, // Horizontal padding as 4% of screen width
+                              horizontal: screenWidth *
+                                  0.04, // Horizontal padding as 4% of screen width
                             ),
                           ),
                           validator: (value) {
@@ -95,129 +144,82 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                             return null;
                           },
                         ),
-                        SizedBox(height: screenHeight * 0.02), // Spacing as 2% of screen height
-                        
-                        // New Password Label and TextFormField
-                        Text(
-                          'New Password',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        TextFormField(
-                          controller: _newPasswordController,
-                          obscureText: true, // Obscure text for password field
-                          decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
-                            ),
-                            hintText: 'Enter new password...',
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'This field is required.';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        
-                        // Confirm New Password Label and TextFormField
-                        Text(
-                          'Confirm New Password',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        TextFormField(
-                          controller: _confirmNewPasswordController,
-                          obscureText: true, // Obscure text for password field
-                          decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor: Colors.white, // Set background color to white
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
-                            ),
-                            hintText: 'Confirm new password...',
-                            hintStyle: const TextStyle(color: Colors.grey),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04,
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'This field is required.';
-                            } else if (value != _newPasswordController.text) {
-                              return 'Passwords do not match.';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        
-                        // Centered "Submit" Button
+                        SizedBox(
+                            height: screenHeight *
+                                0.02), // Spacing as 2% of screen height
+
+                        // Buttons in a row
                         Align(
                           alignment: Alignment.center,
-                          child: SizedBox(
-                            width: screenWidth * 0.5, // 50% of the screen width
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState?.validate() ?? false) {
-                                  Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginPage(),  // Replace with your target page
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Retrieve Username Button
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _retrieveUsername();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
                                   ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black, // Background color of the button
-                              ),
-                              child: const Text(
-                                'Submit',
-                                style: TextStyle(
-                                  color: Colors.white, // Text color of the button
+                                  child: const Text(
+                                    'Retrieve Username',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
+                              ),
+                              SizedBox(width: screenWidth * 0.02), // Spacing
+                              // Back Button
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                  ),
+                                  child: const Text(
+                                    'Back',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.03),
+                        
+                        // Display the retrieved username or error message centered
+                        if (_username != null)
+                          Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Your username is: $_username',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        Align(
-                          alignment: Alignment.center,
-                          child: SizedBox(
-                            width: screenWidth * 0.5, // 50% of the screen width
-                            child: ElevatedButton(
-                              onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black, // Background color of the button
-                              ),
-                              child: const Text(
-                                'BACK',
-                                style: TextStyle(
-                                  color: Colors.white, // Text color of the button
-                                ),
+                        if (_error != null)
+                          Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: screenWidth * 0.05,
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
