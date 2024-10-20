@@ -175,6 +175,21 @@ app.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/forgot-username/:email', async(req, res) =>{
+  try{
+    const email = req.params.email;
+    const user = await User.findOne({ email });
+
+    if (user) {
+      res.status(200).json({ username: user.username }); // Send the username in the response
+    } else {
+      res.status(404).json({ error: 'User not found' }); // If no user found, send 404
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' }); // Handle server errors
+  }
+});
+
 
 app.get('/bar-profile', authenticateToken, async (req, res) => {
   try {

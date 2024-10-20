@@ -14,12 +14,14 @@ class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _confirmEmailController = TextEditingController();
 
   Future<void> _signUp() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
-    final nickname = _nicknameController.text;
+    final email = _emailController.text;
+    final confirmEmail = _confirmEmailController.text;
 
     final response = await http.post(
       Uri.parse('http://10.0.2.2:3000/signup'), // Use your backend URL here
@@ -29,7 +31,8 @@ class _SignUpPageState extends State<SignUpPage> {
       body: jsonEncode(<String, String>{
         'username': username,
         'password': password,
-        'nickname': nickname,
+        'email': email,
+        'confirmEmail': confirmEmail,
       }),
     );
 
@@ -42,7 +45,9 @@ class _SignUpPageState extends State<SignUpPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to sign up: ${jsonDecode(response.body)['error']}')),
+        SnackBar(
+            content: Text(
+                'Failed to sign up: ${jsonDecode(response.body)['error']}')),
       );
     }
   }
@@ -110,7 +115,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -142,7 +148,8 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter password',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -160,7 +167,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                         Text(
-                          'Nickname',
+                          'Email',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
@@ -169,15 +176,49 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                         SizedBox(height: screenHeight * 0.01),
                         TextFormField(
-                          controller: _nicknameController,
+                          controller: _emailController,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
-                            hintText: 'Enter nickname...',
+                            hintText: 'Enter email...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Text(
+                          'Confirm Email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        TextFormField(
+                          controller: _confirmEmailController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                            ),
+                            hintText: 'Confirm email...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
@@ -197,8 +238,9 @@ class _SignUpPageState extends State<SignUpPage> {
                             width: screenWidth * 0.5,
                             child: ElevatedButton(
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ?? false) {
-                                  _signUp();  // Call the sign-up method
+                                if (_formKey.currentState?.validate() ??
+                                    false) {
+                                  _signUp(); // Call the sign-up method
                                 }
                               },
                               style: ElevatedButton.styleFrom(
