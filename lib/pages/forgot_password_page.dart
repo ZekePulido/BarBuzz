@@ -100,7 +100,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         Align(
                           alignment: Alignment.center,
                           child: Text(
-                            'Forgot Username',
+                            'Reset Password',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth *
@@ -150,50 +150,40 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         SizedBox(
                             height: screenHeight *
                                 0.02), // Spacing as 2% of screen height
-
-                        // Buttons in a row
-                        Align(
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Retrieve Username Button
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    _sendResetCode();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                  ),
-                                  child: const Text(
-                                    'Send Password Reset Instructions',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                        Column(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                _sendResetCode();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                              ),
+                              child: const Text(
+                                'Send Password Reset Instructions',
+                                style: TextStyle(
+                                  color: Colors.white,
                                 ),
                               ),
-                              SizedBox(width: screenWidth * 0.02), // Spacing
-                              // Back Button
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                  ),
-                                  child: const Text(
-                                    'Back',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                            ),
+                            SizedBox(
+                                height: screenHeight *
+                                    0.02), // Spacing as 2% of screen height
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                              ),
+                              child: const Text(
+                                'Back',
+                                style: TextStyle(
+                                  color: Colors.white,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

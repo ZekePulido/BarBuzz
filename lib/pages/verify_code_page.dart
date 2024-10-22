@@ -62,32 +62,162 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      appBar: AppBar(title: Text('Verify Code & Reset Password')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            TextField(
-              controller: _codeController,
-              decoration: InputDecoration(labelText: '5-digit Code'),
-              keyboardType: TextInputType.number,
+      backgroundColor: Colors.black,
+      body: SingleChildScrollView(
+        padding:
+            EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxWidth: screenWidth *
+                    0.8), // Constrain max width to 80% of screen width
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Centered "BARBUZZ" Text
+                  Text(
+                    "BARBUZZ",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: screenWidth *
+                          0.10, // Font size as 10% of screen width
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(
+                      height: screenHeight *
+                          0.02), // Spacing as 2% of screen height
+                  Container(
+                    padding: EdgeInsets.all(
+                        screenWidth * 0.04), // Padding as 4% of screen width
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(220, 255, 179, 0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Reset Password',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth *
+                                  0.06, // Font size as 6% of screen width
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        TextFormField(
+                          controller: _codeController,
+                          decoration: InputDecoration(
+                            filled: true, // Fill the background with color
+                            fillColor:
+                                Colors.white, // Set background color to white
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                            ),
+                            hintText: 'Enter your code...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: screenWidth *
+                                  0.04, // Horizontal padding as 4% of screen width
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            filled: true, // Fill the background with color
+                            fillColor:
+                                Colors.white, // Set background color to white
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                            ),
+                            hintText: 'Enter your new password...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: screenWidth *
+                                  0.04, // Horizontal padding as 4% of screen width
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        // Buttons in a row
+                        Align(
+                          alignment: Alignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Retrieve Username Button
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    _verifyCodeAndResetPassword();
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                  ),
+                                  child: const Text(
+                                    'Reset Password',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.02), // Spacing
+                              // Back Button
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                  ),
+                                  child: const Text(
+                                    'Back',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: 'New Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _verifyCodeAndResetPassword,
-              child: _isLoading ? CircularProgressIndicator() : Text('Reset Password'),
-            ),
-          ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }

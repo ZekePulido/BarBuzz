@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../pages/main_page.dart';
 import '../pages/sign_up_page.dart';
-import 'username_reset_page.dart';
 import '../pages/bar_profile_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -199,28 +198,6 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Text(
                                 'Login',
                                 style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.015),
-                        Align(
-                          alignment: Alignment.center,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ForgotUsernamePage(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'FORGOT USERNAME?',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.03,
-                                color: Colors.white,
-                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
