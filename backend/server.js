@@ -8,6 +8,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const app = express();
 const port = 3000;
@@ -37,7 +39,9 @@ const userSchema = new mongoose.Schema({
   venueWebsite: String, // New field for venue website
   type: Number, // 1 for bar, 0 for signup
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
-  location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' }
+  location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' },
+  resetPasswordCode: String,
+  resetPasswordExpires: Date,
 });
 
 const eventSchema = new mongoose.Schema({
@@ -56,6 +60,14 @@ const locationSchema = new mongoose.Schema({
   image: String, // Path to the image
   address: String,
   description: String, // Add description field
+});
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'Barbuzzofficial@gmail.com',
+    pass: 'rczc vfox tzop rqhj',
+  },
 });
 
 const User = mongoose.model('User', userSchema);
@@ -567,6 +579,61 @@ app.put('/location/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
+app.post('/forgot-password', async (req, res) =>{
+  const { email } = req.body;
+  try{
+    const user = await User.findOne({ email });
+    if (!user){
+      return res.status((404).json({ message: 'User not found'}));
+    }
+
+    const resetCode = Math.floor(10000 + Math.random() * 90000);
+    const resetExpires = Date.now() + 36000000;
+
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordExpires = resetExpires;
+
+    await user.save();
+
+    const mailOptions = {
+      from: 'Barbuzzofficial@gmail.com',
+      to: user.email,
+      subject: 'Password Reset Code',
+      text: `You requested to reset your password. Your 5-digit code is: ${resetCode}. The code is valid for 1 hour.`,
+    }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Error sending email' });
+      }
+      res.status(200).json({ message: 'Password reset code sent' });
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+})
+
+app.post('/verify-code', async (req, res) => {
+  const { email, code, newPassword } = req.body;
+  try {
+    const user = await User.findOne({ email, resetPasswordCode: code, resetPasswordExpires: { $gt: Date.now() } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset code' });
+    }
+
+    // Hash the new password and save
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordCode = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
