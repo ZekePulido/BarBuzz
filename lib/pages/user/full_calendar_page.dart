@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart'; // Import the intl package
-import 'package:barbuzz/pages/main_page.dart';
+import 'package:barbuzz/pages/user/main_page.dart';
 
 class Event {
   final String title;

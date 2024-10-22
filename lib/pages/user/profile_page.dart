@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:barbuzz/pages/sign_up_page.dart';
+import 'package:barbuzz/pages/user/sign_up_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

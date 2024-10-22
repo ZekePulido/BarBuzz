@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
-import 'package:barbuzz/pages/bar_profile_page.dart'; // Adjust based on your project structure
+import 'package:barbuzz/pages/bar/bar_profile_page.dart'; // Adjust based on your project structure
 
 class EditEventPage extends StatefulWidget {
   final String eventId;

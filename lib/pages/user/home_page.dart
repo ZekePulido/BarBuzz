@@ -1,8 +1,8 @@
-import 'package:barbuzz/pages/apply_location_page.dart';
-import 'package:barbuzz/pages/main_page.dart';
+import 'package:barbuzz/pages/bar/apply_location_page.dart';
+import 'package:barbuzz/pages/user/main_page.dart';
 import 'package:flutter/material.dart';
-import '../pages/log_in_page.dart';
-import '../pages/sign_up_page.dart';
+import 'log_in_page.dart';
+import 'sign_up_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

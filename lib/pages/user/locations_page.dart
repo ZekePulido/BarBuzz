@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../utils/location_card.dart';
-import '../pages/bar_page.dart';
+import '../../utils/location_card.dart';
+import '../bar/bar_page.dart';
 
 // Location model
 class Location {

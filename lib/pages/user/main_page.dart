@@ -1,4 +1,4 @@
-import 'package:barbuzz/pages/user_profile_page.dart';
+import 'package:barbuzz/pages/user/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'locations_page.dart'; // Import LocationsPage widget

@@ -1,73 +1,53 @@
-import 'dart:convert';
-import 'package:barbuzz/pages/forgot_password_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../pages/main_page.dart';
-import '../pages/sign_up_page.dart';
-import '../pages/bar_profile_page.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'log_in_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _confirmEmailController = TextEditingController();
 
-  Future<void> _login() async {
+  Future<void> _signUp() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
+    final email = _emailController.text;
+    final confirmEmail = _confirmEmailController.text;
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/login'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'username': username,
-          'password': password,
-        }),
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:3000/signup'), // Use your backend URL here
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+        'email': email,
+        'confirmEmail': confirmEmail,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
       );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'];
-        final userType = data['type'];
-
-        await _storage.write(key: 'auth_token', value: token);
-
-        // Navigate based on user type
-        if (userType == 1) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BarProfilePage(), // Update this to your bar page
-            ),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const MainPage(selectedIndex: 1),
-            ),
-          );
-        }
-      } else {
-        final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'])),
-        );
-      }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred. Please try again.')),
+        SnackBar(
+            content: Text(
+                'Failed to sign up: ${jsonDecode(response.body)['error']}')),
       );
     }
   }
@@ -110,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.center,
                           child: Text(
-                            'Login',
+                            'Sign Up',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.06,
@@ -124,6 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -134,7 +115,8 @@ class _LoginPageState extends State<LoginPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -155,6 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
@@ -165,9 +148,10 @@ class _LoginPageState extends State<LoginPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade400),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
                             ),
-                            hintText: 'Enter password...',
+                            hintText: 'Enter password',
                             hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,
@@ -182,22 +166,91 @@ class _LoginPageState extends State<LoginPage> {
                           },
                         ),
                         SizedBox(height: screenHeight * 0.02),
+                        Text(
+                          'Email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.01),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                            ),
+                            hintText: 'Enter email...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Text(
+                          'Confirm Email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        TextFormField(
+                          controller: _confirmEmailController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide:
+                                  BorderSide(color: Colors.grey.shade400),
+                            ),
+                            hintText: 'Confirm email...',
+                            hintStyle: const TextStyle(color: Colors.grey),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'This field is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
                         Align(
                           alignment: Alignment.center,
                           child: SizedBox(
                             width: screenWidth * 0.5,
                             child: ElevatedButton(
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ?? false) {
-                                  _login();
+                                if (_formKey.currentState?.validate() ??
+                                    false) {
+                                  _signUp(); // Call the sign-up method
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
                               ),
                               child: const Text(
-                                'Login',
-                                style: TextStyle(color: Colors.white),
+                                'SIGN UP',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -210,33 +263,12 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ResetPasswordPage(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
                             child: Text(
-                              'FORGOT PASSWORD?',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.03,
-                                color: Colors.white,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignUpPage(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'SIGN UP',
+                              'ALREADY HAVE AN ACCOUNT?',
                               style: TextStyle(
                                 fontSize: screenWidth * 0.03,
                                 color: Colors.white,
@@ -260,11 +292,16 @@ class _LoginPageState extends State<LoginPage> {
                               child: const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.arrow_back, color: Colors.white),
+                                  Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.white,
+                                  ),
                                   SizedBox(width: 8),
                                   Text(
                                     'BACK',
-                                    style: TextStyle(color: Colors.white),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ],
                               ),

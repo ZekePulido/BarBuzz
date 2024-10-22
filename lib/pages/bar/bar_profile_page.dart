@@ -1,15 +1,14 @@
 import 'dart:convert';
-import 'package:barbuzz/pages/create_events_page.dart';
-import 'package:barbuzz/pages/delete_event_page.dart';
-import 'package:barbuzz/pages/edit_event_page.dart';
-import 'package:barbuzz/pages/edit_location_page.dart';
-import 'package:barbuzz/pages/log_in_page.dart';
+import 'package:barbuzz/pages/bar/create_events_page.dart';
+import 'package:barbuzz/pages/bar/delete_event_page.dart';
+import 'package:barbuzz/pages/bar/edit_event_page.dart';
+import 'package:barbuzz/pages/bar/edit_location_page.dart';
+import 'package:barbuzz/pages/user/log_in_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:barbuzz/pages/apply_location_page.dart';
 import 'package:barbuzz/models/event.dart';
-import 'package:barbuzz/pages/event_details_page.dart';
+import 'package:barbuzz/pages/user/event_details_page.dart';
 
 class BarProfilePage extends StatefulWidget {
   const BarProfilePage({super.key});

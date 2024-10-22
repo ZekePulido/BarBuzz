@@ -1,5 +1,5 @@
-import 'package:barbuzz/pages/bar_profile_page.dart';
-import 'package:barbuzz/pages/log_in_page.dart';
+import 'package:barbuzz/pages/bar/bar_profile_page.dart';
+import 'package:barbuzz/pages/user/log_in_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';

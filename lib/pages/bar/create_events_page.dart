@@ -1,4 +1,4 @@
-import 'package:barbuzz/pages/bar_profile_page.dart';
+import 'package:barbuzz/pages/bar/bar_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date and time
 import 'package:http/http.dart' as http;
