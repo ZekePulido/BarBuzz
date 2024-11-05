@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:barbuzz/pages/auth/main_page.dart';
 import 'package:barbuzz/pages/user/forgot_password_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -40,18 +41,26 @@ class _LoginPageState extends State<LoginPage> {
         final data = jsonDecode(response.body);
         final token = data['token'];
         final userType = data['type'];
+        final enabled = data['enabled'];
 
         await _storage.write(key: 'auth_token', value: token);
 
         // Navigate based on user type
-        if (userType == 1) {
+        if (userType == 1 && enabled == true) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => const BarProfilePage(), // Update this to your bar page
             ),
           );
-        } else {
+        } else if(userType == 2){
+          Navigator.pushReplacement(
+             context,
+            MaterialPageRoute(
+              builder: (context) => const AdminMainPage(selectedIndex: 1), // Update this to your bar page
+            ),
+          );
+        } else if(userType == 0) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
