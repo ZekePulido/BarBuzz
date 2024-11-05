@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema({
   location: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' },
   resetPasswordCode: String,
   resetPasswordExpires: Date,
+  enabledBar: { type: Boolean, default: false },
 });
 
 const eventSchema = new mongoose.Schema({
@@ -97,20 +98,6 @@ app.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    let locationId;
-
-     // Create a location only if the user type is 1
-     if (type === 1) {
-      const location = new Location({
-        location: venueName, // Use the venue name for the location
-        address: venueAddress,
-        description: venueDescription,
-        // Optionally include an image if provided
-      });
-
-      await location.save();
-      locationId = location._id; // Store the newly created location ID
-    }
 
     const user = new User({ 
       username, 
@@ -122,14 +109,16 @@ app.post('/signup', async (req, res) => {
       venueDescription,
       venueWebsite,
       type,
-      location: locationId ? locationId : null,
+      enabledBar: false, // Initially set to false for all applicants
     });
+
     await user.save();
     res.status(201).send({ message: 'User created successfully' });
   } catch (err) {
     res.status(400).send({ error: err.message });
   }
 });
+
 
 
 // Login Route
@@ -634,6 +623,54 @@ app.post('/verify-code', async (req, res) => {
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Route to accept an applicant by setting enabledBar to true
+app.put('/applicants/accept/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the applicant
+    const applicant = await User.findById(id);
+    if (!applicant) {
+      return res.status(404).json({ error: 'Applicant not found' });
+    }
+
+    let locationId = null;
+
+    // Create location only if user type is 1
+    if (applicant.type === 1) {
+      const location = new Location({
+        location: applicant.venueName,
+        address: applicant.venueAddress,
+        description: applicant.venueDescription,
+      });
+
+      await location.save();
+      locationId = location._id;
+    }
+
+    // Update the applicant with enabledBar true and locationId if created
+    applicant.enabledBar = true;
+    applicant.location = locationId;
+    await applicant.save();
+
+    res.json({ message: 'Applicant accepted', applicant });
+  } catch (error) {
+    res.status(500).json({ error: 'Error accepting applicant' });
+  }
+});
+
+
+// Route to deny (delete) an applicant
+app.delete('/applicants/deny/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await User.findByIdAndDelete(id);
+    res.json({ message: 'Applicant denied and deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error denying applicant' });
   }
 });
 

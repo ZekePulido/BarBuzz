@@ -22,7 +22,7 @@ class _SignUpPageState extends State<SignUpPage> {
     final password = _passwordController.text;
     final email = _emailController.text;
     final confirmEmail = _confirmEmailController.text;
-
+    
     final response = await http.post(
       Uri.parse('http://10.0.2.2:3000/signup'), // Use your backend URL here
       headers: <String, String>{
