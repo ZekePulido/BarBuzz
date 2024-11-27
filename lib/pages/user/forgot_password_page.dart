@@ -1,7 +1,6 @@
-import 'package:barbuzz/pages/user/verify_code_page.dart';
+import 'package:barbuzz/pages/user/verify_code_page.dart'; // Remove this if not needed
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key});
@@ -12,7 +11,6 @@ class ResetPasswordPage extends StatefulWidget {
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
 
@@ -23,28 +21,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     final email = _emailController.text.trim();
     try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/forgot-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text('Reset code sent! Check your email.'),
-        ));
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => VerifyCodePage(email: email)),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to send reset code. Please try again.'),
-        ));
-      }
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('An error occurred. Please try again.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send reset code: ${e.toString()}'),
+        ),
+      );
     }
 
     setState(() {
@@ -60,35 +48,26 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
-        padding:
-            EdgeInsets.all(screenWidth * 0.05), // Padding as 5% of screen width
+        padding: EdgeInsets.all(screenWidth * 0.05),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-                maxWidth: screenWidth *
-                    0.8), // Constrain max width to 80% of screen width
+            constraints: BoxConstraints(maxWidth: screenWidth * 0.8),
             child: Form(
-              key: _formKey, // Assign the form key here
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Centered "BARBUZZ" Text
                   Text(
                     "BARBUZZ",
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: screenWidth *
-                          0.10, // Font size as 10% of screen width
+                      fontSize: screenWidth * 0.10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(
-                      height: screenHeight *
-                          0.02), // Spacing as 2% of screen height
-
+                  SizedBox(height: screenHeight * 0.02),
                   Container(
-                    padding: EdgeInsets.all(
-                        screenWidth * 0.04), // Padding as 4% of screen width
+                    padding: EdgeInsets.all(screenWidth * 0.04),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(220, 255, 179, 0),
                       borderRadius: BorderRadius.circular(12),
@@ -102,8 +81,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             'Reset Password',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: screenWidth *
-                                  0.06, // Font size as 6% of screen width
+                              fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -113,20 +91,16 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           'Email',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth *
-                                0.04, // Font size as 4% of screen width
+                            fontSize: screenWidth * 0.04,
                             fontWeight: FontWeight.normal,
                           ),
                         ),
-                        SizedBox(
-                            height: screenHeight *
-                                0.01), // Space between label and text field as 1% of screen height
+                        SizedBox(height: screenHeight * 0.01),
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
-                            filled: true, // Fill the background with color
-                            fillColor:
-                                Colors.white, // Set background color to white
+                            filled: true,
+                            fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide:
@@ -135,39 +109,41 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             hintText: 'Enter your email...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: screenWidth *
-                                  0.04, // Horizontal padding as 4% of screen width
+                              horizontal: screenWidth * 0.04,
                             ),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'This field is required.';
                             }
+                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                              return 'Enter a valid email.';
+                            }
                             return null;
                           },
                         ),
-                        SizedBox(
-                            height: screenHeight *
-                                0.02), // Spacing as 2% of screen height
+                        SizedBox(height: screenHeight * 0.02),
                         Column(
                           children: [
                             ElevatedButton(
                               onPressed: () {
-                                _sendResetCode();
+                                if (_formKey.currentState!.validate()) {
+                                  _sendResetCode();
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
                               ),
-                              child: const Text(
-                                'Send Password Reset Instructions',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Text(
+                                      'Send Password Reset Instructions',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                             ),
-                            SizedBox(
-                                height: screenHeight *
-                                    0.02), // Spacing as 2% of screen height
+                            SizedBox(height: screenHeight * 0.02),
                             ElevatedButton(
                               onPressed: () {
                                 Navigator.pop(context);
@@ -177,9 +153,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               ),
                               child: const Text(
                                 'Back',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(color: Colors.white),
                               ),
                             ),
                           ],

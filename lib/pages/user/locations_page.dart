@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/location_card.dart';
 import '../bar/bar_page.dart';
 
@@ -18,12 +17,13 @@ class Location {
     required this.address,
   });
 
-  factory Location.fromJson(Map<String, dynamic> json) {
+  factory Location.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return Location(
-      id: json['_id'],
-      location: json['location'],
-      image: json['image'],
-      address: json['address'],
+      id: doc.id,
+      location: data['locationName'] ?? 'Unknown Location',
+      image: data['image'] ?? '',
+      address: data['address'] ?? 'No Address Provided',
     );
   }
 }
@@ -46,14 +46,9 @@ class _LocationsPageState extends State<LocationsPage> {
   }
 
   Future<List<Location>> fetchLocations() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/locations'));
+    final querySnapshot = await FirebaseFirestore.instance.collection('locations').get();
 
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Location.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load locations');
-    }
+    return querySnapshot.docs.map((doc) => Location.fromFirestore(doc)).toList();
   }
 
   void _navigateToBarPage(Location location) {
@@ -133,8 +128,8 @@ class _LocationsPageState extends State<LocationsPage> {
                       children: locations.map((location) {
                         return LocationCard(
                           imagePath: location.image.isNotEmpty
-                              ? location.image // Pass the image URL as a string
-                              : 'assets/logos/BarBee.png', // Use the path to the asset as a fallback
+                              ? location.image // Use the image URL if available
+                              : 'assets/logos/BarBee.png', // Fallback image
                           location: location.location.isNotEmpty ? location.location : 'Unknown Location',
                           locationId: location.id,
                           onTap: () => _navigateToBarPage(location),

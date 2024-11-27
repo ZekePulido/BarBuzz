@@ -1,12 +1,13 @@
 import 'package:barbuzz/pages/bar/bar_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date and time
-import 'package:http/http.dart' as http;
-import 'dart:convert'; // For jsonEncode
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateEventsPage extends StatefulWidget {
-  final String locationId;
-  const CreateEventsPage({super.key, required this.locationId});
+  final String locationId; // The location document ID
+  final String userId; // The user document ID
+  const CreateEventsPage(
+      {super.key, required this.locationId, required this.userId});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -36,7 +37,7 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
     super.dispose();
   }
 
-Future<void> _createEvent() async {
+ Future<void> _createEvent() async {
   final title = _eventTitleController.text;
   final description = _eventDescriptionController.text;
 
@@ -47,30 +48,65 @@ Future<void> _createEvent() async {
     return;
   }
 
-  // Subtract 5 hours for CST (Central Standard Time)
-  final updatedStartTime = _startDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String();
-  final updatedEndTime = _endDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String();
+  final startTime = _startDateTime!.toUtc();
+  final endTime = _endDateTime!.toUtc();
   final String tag = selectedTags.isNotEmpty ? selectedTags.first : '';
 
-  final Map<String, String> body = {
-    'title': title,
-    'description': description,
-    'startTime': updatedStartTime,
-    'endTime': updatedEndTime,  
-    'location': widget.locationId,
-    'tag': tag,
-  };
-
   try {
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/events'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(body),
-    );
+    // Generate a unique ID for the event
+    String eventId = FirebaseFirestore.instance.collection('events').doc().id;
 
-    if (response.statusCode == 201) {
+    // Fetch only the 'location' field from the location document
+    DocumentSnapshot locationSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .collection('location')
+        .doc(widget.locationId)
+        .get();
+
+    if (locationSnapshot.exists) {
+      String locationName =
+          locationSnapshot.get('locationName') ?? 'Unknown Location';
+
+      // Build event data
+      final eventData = {
+        'title': title,
+        'description': description,
+        'startTime': startTime,
+        'endTime': endTime,
+        'locationName': locationName, // Store only the location name
+        'tag': tag,
+        'userId': widget.userId,
+        'locationId': widget.locationId,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // Add the event under the user's location in Firestore with the specified event ID
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('location')
+          .doc(widget.locationId)
+          .collection('events')
+          .doc(eventId)
+          .set(eventData);
+
+      // Add the event under the top-level 'locations' collection with the same event ID
+      await FirebaseFirestore.instance
+          .collection('locations')
+          .doc(widget.locationId)
+          .collection('events')
+          .doc(eventId)
+          .set(eventData);
+
+      // Also add the event to the top-level 'events' collection with the same event ID
+      await FirebaseFirestore.instance.collection('events').doc(eventId).set(eventData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event created successfully.')),
+      );
+
+      // Navigate to the BarProfilePage upon successful event creation
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -79,16 +115,17 @@ Future<void> _createEvent() async {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create event. Status code: ${response.statusCode}')),
+        const SnackBar(content: Text('Location not found.')),
       );
     }
   } catch (e) {
-    print('Error: $e');
+    print('Error occurred: $e');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
+      SnackBar(content: Text('Failed to create event: $e')),
     );
   }
 }
+
 
   Future<void> _selectDateTime(BuildContext context,
       TextEditingController controller, bool isStartTime) async {
@@ -106,7 +143,6 @@ Future<void> _createEvent() async {
       );
 
       if (pickedTime != null) {
-        // Create a full DateTime object
         final DateTime fullDateTime = DateTime(
           pickedDate.year,
           pickedDate.month,
@@ -115,18 +151,15 @@ Future<void> _createEvent() async {
           pickedTime.minute,
         );
 
-        // Adjust to Central Standard Time (CST) by subtracting 5 hours
-        final DateTime cstDateTime = fullDateTime.subtract(const Duration(hours: 5));
+        final DateTime cstDateTime =
+            fullDateTime.subtract(const Duration(hours: 5));
 
-        // Store the UTC time in the controller for posting
         controller.text = DateFormat('yyyy-MM-dd HH:mm').format(cstDateTime);
 
-        // Update the displayed time in the text field using the desired format
         setState(() {
           if (isStartTime) {
-            _startDateTime = fullDateTime; // Store the full date-time object
-            _startTimeController.text =
-                getFormattedStartTime(); // Display formatted time
+            _startDateTime = fullDateTime;
+            _startTimeController.text = getFormattedStartTime();
           } else {
             _endDateTime = fullDateTime;
             _endTimeController.text = getFormattedEndTime();
@@ -301,8 +334,8 @@ Future<void> _createEvent() async {
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.calendar_today,
                                   color: Colors.grey),
-                              onPressed: () =>
-                                  _selectDateTime(context, _endTimeController, false),
+                              onPressed: () => _selectDateTime(
+                                  context, _endTimeController, false),
                             ),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,

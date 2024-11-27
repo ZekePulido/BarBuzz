@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "595249944326",
+    "project_id": "barbuzz-bba60",
+    "storage_bucket": "barbuzz-bba60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595249944326:android:4eefa46fb51552e5ec7087",
+        "android_client_info": {
+          "package_name": "com.example.barbuzz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCunL7S4nQg97NxfxMrqma0egaQtmwIneo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

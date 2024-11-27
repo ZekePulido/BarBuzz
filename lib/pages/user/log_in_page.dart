@@ -1,12 +1,12 @@
-import 'dart:convert';
-import 'package:barbuzz/pages/auth/main_page.dart';
-import 'package:barbuzz/pages/user/forgot_password_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import this for Firestore
 import 'main_page.dart';
 import 'sign_up_page.dart';
 import '../bar/bar_profile_page.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'forgot_password_page.dart';
+import '../auth/main_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,45 +22,44 @@ class _LoginPageState extends State<LoginPage> {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<void> _login() async {
-    final username = _usernameController.text;
-    final password = _passwordController.text;
+  final email = _usernameController.text;
+  final password = _passwordController.text;
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/login'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'username': username,
-          'password': password,
-        }),
-      );
+  try {
+    // Sign in with Firebase Authentication
+    UserCredential userCredential = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email, password: password);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'];
-        final userType = data['type'];
-        final enabled = data['enabled'];
+    // Fetch the user's ID token to check custom claims
+    User? user = userCredential.user;
+    if (user != null) {
+      IdTokenResult idTokenResult = await user.getIdTokenResult();
 
-        await _storage.write(key: 'auth_token', value: token);
+      // Check if the user has the 'isAdmin' claim
+      if (idTokenResult.claims != null && idTokenResult.claims!['isAdmin'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminMainPage(selectedIndex: 1),
+          ),
+        );
+      } else {
+        // Navigate based on non-admin roles (e.g., regular user, bar profile)
+        DocumentSnapshot userData = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-        // Navigate based on user type
-        if (userType == 1 && enabled == true) {
+        int userType = userData['userType'];
+
+        if (userType == 1) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const BarProfilePage(), // Update this to your bar page
+              builder: (context) => const BarProfilePage(),
             ),
           );
-        } else if(userType == 2){
-          Navigator.pushReplacement(
-             context,
-            MaterialPageRoute(
-              builder: (context) => const AdminMainPage(selectedIndex: 1), // Update this to your bar page
-            ),
-          );
-        } else if(userType == 0) {
+        } else if (userType == 0) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -68,18 +67,15 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         }
-      } else {
-        final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'])),
-        );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred. Please try again.')),
-      );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to log in: ${e.toString()}')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                         Text(
-                          'Username',
+                          'Email',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
@@ -145,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
-                            hintText: 'Enter username...',
+                            hintText: 'Enter email...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: screenWidth * 0.04,

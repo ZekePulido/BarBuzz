@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
 import 'log_in_page.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -23,31 +23,43 @@ class _SignUpPageState extends State<SignUpPage> {
     final email = _emailController.text;
     final confirmEmail = _confirmEmailController.text;
     
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:3000/signup'), // Use your backend URL here
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'username': username,
-        'password': password,
-        'email': email,
-        'confirmEmail': confirmEmail,
-      }),
-    );
+    if (email != confirmEmail) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Emails do not match')),
+      );
+      return;
+    }
 
-    if (response.statusCode == 201) {
-      Navigator.push(
+    try {
+      // Create user with email and password
+      UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Update display name for the user
+      await credential.user?.updateDisplayName(username);
+      await credential.user?.reload();
+
+      // Add user information to Firestore with userType = 0
+      await FirebaseFirestore.instance.collection('users').doc(credential.user?.uid).set({
+        'username': username,
+        'email': email,
+        'userType': 0, // Add userType to the user's document
+        'createdAt': FieldValue.serverTimestamp(), // Optional field for tracking account creation time
+      });
+
+      // Navigate to login page after successful sign-up
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => const LoginPage(),
         ),
       );
-    } else {
+    } catch (e) {
+      print(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Failed to sign up: ${jsonDecode(response.body)['error']}')),
+        SnackBar(content: Text('Failed to sign up: ${e.toString()}')),
       );
     }
   }
@@ -115,8 +127,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade400),
+                              borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter username...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -148,8 +159,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade400),
+                              borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter password',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -182,8 +192,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade400),
+                              borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Enter email...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -215,8 +224,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade400),
+                              borderSide: BorderSide(color: Colors.grey.shade400),
                             ),
                             hintText: 'Confirm email...',
                             hintStyle: const TextStyle(color: Colors.grey),
@@ -238,8 +246,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             width: screenWidth * 0.5,
                             child: ElevatedButton(
                               onPressed: () {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                if (_formKey.currentState?.validate() ?? false) {
                                   _signUp(); // Call the sign-up method
                                 }
                               },

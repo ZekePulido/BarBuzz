@@ -1,7 +1,7 @@
-import 'package:barbuzz/pages/user/log_in_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:barbuzz/pages/user/log_in_page.dart';
 
 class ApplyLocationPage extends StatefulWidget {
   const ApplyLocationPage({super.key});
@@ -33,35 +33,43 @@ class _ApplyLocationPageState extends State<ApplyLocationPage> {
       final venueDescription = _venueDescriptionController.text;
       final venueWebsite = _venueWebsiteController.text;
 
+      if (email != confirmEmail) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Emails do not match')),
+        );
+        return;
+      }
+
       try {
-        final response = await http.post(
-          Uri.parse('http://10.0.2.2:3000/signup'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode({
+        // Create user with Firebase Authentication
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(email: email, password: password);
+
+        User? user = userCredential.user;
+        if (user != null) {
+          // Update the user's display name
+          await user.updateDisplayName(username);
+          await user.reload();
+
+          // Save additional user information in Firestore
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'username': username,
-            'password': password,
             'email': email,
-            'confirmEmail': confirmEmail,
             'venueAddress': venueAddress,
             'venueName': venueName,
             'venueDescription': venueDescription,
             'venueWebsite': venueWebsite,
-            'type': 1, // Setting type to 1 for bar
-          }),
-        );
+            'enabled': false,
+            'userType': 1,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
-        if (response.statusCode == 201) {
-          Navigator.push(
+          // Navigate to the login page after successful sign-up
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => const LoginPage(),
             ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to apply location. ${response.body}')),
           );
         }
       } catch (error) {

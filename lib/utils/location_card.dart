@@ -2,65 +2,87 @@ import 'package:flutter/material.dart';
 
 class LocationCard extends StatelessWidget {
   final String imagePath;
-  final String location; // Use location instead of locationId
-  final String locationId; // Keep locationId for favoriting functionality
-  final VoidCallback onTap; // Change to VoidCallback for clearer usage
+  final String location;
+  final String locationId;
+  final VoidCallback onTap;
 
   const LocationCard({
-    super.key,
+    Key? key,
     required this.imagePath,
-    required this.location, // Pass the location name
-    required this.locationId, // Keep locationId for favoriting functionality
+    required this.location,
+    required this.locationId,
     required this.onTap,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    const imageSize = 100.0; // Adjust size as needed
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        color: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        elevation: 5,
+        child: Row(
+          children: [
+            // Image Section
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(15),
+                bottomLeft: Radius.circular(15),
+              ),
+              child: Image.network(
+                imagePath,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/logos/BarBee.png', // Fallback image
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
 
-    return Card(
-      color: Colors.grey[800], // Set card color
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(8),
-        leading: SizedBox(
-          width: imageSize,
-          height: imageSize,
-          child: imagePath.isNotEmpty
-              ? Image.network(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) {
-                      return child;
-                    } else {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  (loadingProgress.expectedTotalBytes ?? 1)
-                              : null,
-                        ),
-                      );
-                    }
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback for image loading errors
-                    return Image.asset(
-                      'assets/logos/BarBee.png', // Default asset image
-                      fit: BoxFit.cover,
-                    );
-                  },
-                )
-              : Image.asset(
-                  'assets/logos/BarBee.png', // Fallback asset image if imagePath is empty
-                  fit: BoxFit.cover,
+            // Details Section
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      location,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                  ],
                 ),
+              ),
+            ),
+
+            // Arrow Icon
+            const Padding(
+              padding: EdgeInsets.only(right: 8.0),
+              child: Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white70,
+                size: 18,
+              ),
+            ),
+          ],
         ),
-        title: Text(
-          location,
-          style: const TextStyle(color: Colors.white), // Display location name
-        ),
-        onTap: onTap, // Call the onTap function when tapped
       ),
     );
   }

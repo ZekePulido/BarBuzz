@@ -1,9 +1,8 @@
 import 'package:barbuzz/pages/bar/bar_profile_page.dart';
 import 'package:barbuzz/pages/user/log_in_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditLocationPage extends StatefulWidget {
   const EditLocationPage({super.key});
@@ -14,52 +13,36 @@ class EditLocationPage extends StatefulWidget {
 
 class _EditLocationPageState extends State<EditLocationPage> {
   final _formKey = GlobalKey<FormState>();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _confirmEmailController = TextEditingController();
   final TextEditingController _venueAddressController = TextEditingController();
   final TextEditingController _venueNameController = TextEditingController();
-  final TextEditingController _venueDescriptionController =
-      TextEditingController();
+  final TextEditingController _venueDescriptionController = TextEditingController();
   final TextEditingController _venueWebsiteController = TextEditingController();
 
-  String venueName = "";
-  String venueAddress = "";
-  String venueDescription = "";
-  String locationId = ""; // This is used to update the location
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  String locationId = ""; // Location document ID
 
   @override
   void initState() {
     super.initState();
-    _fetchProfileDetails(); // Fetch the current profile details
-    _fetchBarProfile(); // Fetch the bar profile including locationId
+    _fetchProfileDetails();
+    _fetchBarProfile();
   }
 
   Future<void> _submitForm() async {
-    final token = await _storage.read(key: 'auth_token');
-    if (token == null) {
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('User not authenticated. Please log in again.')),
+        const SnackBar(content: Text('User not authenticated. Please log in again.')),
       );
       await Future.delayed(const Duration(seconds: 1));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
       return;
     }
 
     if (_formKey.currentState?.validate() ?? false) {
-      if (_emailController.text != _confirmEmailController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email and Confirm Email must match.')),
-        );
-        return;
-      }
-
-      final data = {
-        'email': _emailController.text,
+      final profileData = {
         'venueAddress': _venueAddressController.text,
         'venueName': _venueNameController.text,
         'venueDescription': _venueDescriptionController.text,
@@ -67,118 +50,75 @@ class _EditLocationPageState extends State<EditLocationPage> {
       };
 
       try {
-        final profileResponse = await http.put(
-          Uri.parse('http://10.0.2.2:3000/profile'),
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode(data),
-        );
+        // Update user profile in Firestore
+        await _firestore.collection('users').doc(currentUser.uid).update(profileData);
 
-        if (profileResponse.statusCode == 200) {
-          await _updateLocationDetails(); // Update the location details
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const BarProfilePage()),
-          );
-        } else {
-          final responseBody = jsonDecode(profileResponse.body);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Failed to update profile: ${responseBody['error'] ?? profileResponse.body}')),
-          );
-        }
-      } catch (error) {
+        await _updateLocationDetails(); // Update the location details
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const BarProfilePage()));
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $error')),
+          SnackBar(content: Text('Failed to update profile: $e')),
         );
       }
     }
   }
 
   Future<void> _updateLocationDetails() async {
-    final token = await _storage.read(key: 'auth_token');
-    if (locationId.isEmpty) {
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null || locationId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Location ID is missing. Cannot update.')),
       );
       return;
     }
 
-    final data = {
-      'location': _venueNameController.text,
+    final locationData = {
+      'locationName': _venueNameController.text,
       'description': _venueDescriptionController.text,
       'address': _venueAddressController.text,
+      'website': _venueWebsiteController.text,
     };
 
     try {
-      final response = await http.put(
-        Uri.parse('http://10.0.2.2:3000/location/$locationId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(data),
-      );
+      // Update user-specific location document
+      await _firestore.collection('users').doc(currentUser.uid).collection('location').doc(locationId).update(locationData);
 
-      print(response.statusCode);
+      // Update or create corresponding document in the top-level "locations" collection
+      await _firestore.collection('locations').doc(locationId).set({
+        ...locationData,
+        'userId': currentUser.uid, // Reference back to the user
+      });
 
-      if (response.statusCode != 200) {
-        final responseBody = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Failed to update location: ${responseBody['error'] ?? response.body}')),
-        );
-      }
-    } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('An error occurred while updating location: $error')),
+        const SnackBar(content: Text('Location updated successfully.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update location: $e')),
       );
     }
   }
 
   Future<void> _fetchProfileDetails() async {
-    final token = await _storage.read(key: 'auth_token');
-
-    if (token == null) {
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('User not authenticated. Please log in again.')),
+        const SnackBar(content: Text('User not authenticated. Please log in again.')),
       );
       await Future.delayed(const Duration(seconds: 1));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
       return;
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+      if (userDoc.exists) {
         setState(() {
-          _emailController.text = data['email'] ?? '';
-          _confirmEmailController.text = data['email'] ??
-              ''; // Set confirm email to match the fetched email
-          _venueAddressController.text = data['venueAddress'] ?? '';
-          _venueNameController.text = data['venueName'] ?? '';
-          _venueDescriptionController.text = data['venueDescription'] ?? '';
-          _venueWebsiteController.text = data['venueWebsite'] ?? '';
+          _venueAddressController.text = userDoc['venueAddress'] ?? '';
+          _venueNameController.text = userDoc['venueName'] ?? '';
+          _venueDescriptionController.text = userDoc['venueDescription'] ?? '';
+          _venueWebsiteController.text = userDoc['venueWebsite'] ?? '';
         });
-      } else {
-        throw Exception('Failed to load profile details');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -188,29 +128,23 @@ class _EditLocationPageState extends State<EditLocationPage> {
   }
 
   Future<void> _fetchBarProfile() async {
-    final token = await _storage.read(key: 'auth_token');
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) return;
 
     try {
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/bar-profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      QuerySnapshot locationSnapshot = await _firestore.collection('users').doc(currentUser.uid).collection('location').limit(1).get();
+      if (locationSnapshot.docs.isNotEmpty) {
+        DocumentSnapshot locationDoc = locationSnapshot.docs.first;
         setState(() {
-          venueName = data['venueName'];
-          venueAddress = data['venueAddress'];
-          venueDescription = data['venueDescription'];
-          locationId = data['locationId'];
+          locationId = locationDoc.id;
+          _venueNameController.text = locationDoc['locationName'] ?? '';
+          _venueAddressController.text = locationDoc['address'] ?? '';
+          _venueDescriptionController.text = locationDoc['description'] ?? '';
+          _venueWebsiteController.text = locationDoc['website'] ?? '';
         });
       } else {
-        final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['error'])),
+          const SnackBar(content: Text('No location found for this user.')),
         );
       }
     } catch (e) {
@@ -218,6 +152,11 @@ class _EditLocationPageState extends State<EditLocationPage> {
         const SnackBar(content: Text('Failed to load bar profile.')),
       );
     }
+  }
+
+  void _logout() async {
+    await _auth.signOut();
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
   }
 
   @override
@@ -255,50 +194,20 @@ class _EditLocationPageState extends State<EditLocationPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Email field
-                        _buildTextField(
-                            'Email', _emailController, 'Enter email...', false),
-                        // Confirm Email field
-                        _buildTextField('Confirm Email',
-                            _confirmEmailController, 'Confirm Email...', false),
-                        // Venue Address field
-                        _buildTextField(
-                            'Venue Address',
-                            _venueAddressController,
-                            'Enter venue address...',
-                            false),
-                        // Venue Name field
-                        _buildTextField('Venue Name *This will be displayed*',
-                            _venueNameController, 'Enter venue name...', false),
-                        // Description field
-                        _buildTextField(
-                            'Description *This will be displayed*',
-                            _venueDescriptionController,
-                            'Enter description...',
-                            false),
-                        // Venue Website field
-                        _buildTextField(
-                            'Venue Website',
-                            _venueWebsiteController,
-                            'Enter venue website...',
-                            false),
+                        _buildTextField('Venue Address', _venueAddressController, 'Enter venue address...', false),
+                        _buildTextField('Venue Name *This will be displayed*', _venueNameController, 'Enter venue name...', false),
+                        _buildTextField('Description *This will be displayed*', _venueDescriptionController, 'Enter description...', false),
+                        _buildTextField('Venue Website', _venueWebsiteController, 'Enter venue website...', false),
                         SizedBox(height: screenHeight * 0.02),
-                        // Submit button
                         SizedBox(
                           width: double.infinity,
                           height: screenHeight * 0.08,
                           child: ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all(Colors.black),
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: const BorderSide(
-                                    color: Colors.white,
-                                    width: 1.5,
-                                  ),
-                                ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: const BorderSide(color: Colors.white, width: 1.5),
                               ),
                             ),
                             onPressed: _submitForm,
@@ -324,8 +233,7 @@ class _EditLocationPageState extends State<EditLocationPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller,
-      String hint, bool isObscure) {
+  Widget _buildTextField(String label, TextEditingController controller, String hint, bool isObscure) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -349,9 +257,7 @@ class _EditLocationPageState extends State<EditLocationPage> {
             ),
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.04,
-            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.04),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {

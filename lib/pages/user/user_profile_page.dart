@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
-import 'package:barbuzz/pages/user/log_in_page.dart'; // Ensure this import is correct
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:barbuzz/pages/user/log_in_page.dart'; // Ensure this import path is correct
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -14,6 +14,7 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   String _username = 'Loading...';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -22,30 +23,27 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _fetchUserProfile() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      setState(() {
+        _username = 'Not logged in';
+      });
+      return;
+    }
+
     try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token == null) {
-        setState(() {
-          _username = 'Not logged in';
-        });
-        return;
-      }
+      DocumentSnapshot userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (userData.exists && userData.data() != null) {
         setState(() {
-          _username = data['username'];
+          _username = userData.get('username') ?? 'No username found';
         });
       } else {
         setState(() {
-          _username = 'Failed to load profile';
+          _username = 'Profile not found';
         });
       }
     } catch (e) {
@@ -56,7 +54,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _logout() async {
-    await _storage.delete(key: 'auth_token');
+    await _auth.signOut();
+    await _storage.delete(key: 'auth_token'); // Optional if used for extra storage management
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
