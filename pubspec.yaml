@@ -21,6 +21,7 @@ dependencies:
   firebase_core: ^3.7.0 # Ensure this is the latest version
   firebase_auth: ^5.3.0 # Ensure this is the latest version
   cloud_firestore: ^5.4.5
+  firebase_messaging: ^15.1.5
 
 dev_dependencies:
   flutter_test:
