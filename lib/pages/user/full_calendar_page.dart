@@ -59,7 +59,6 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
 
   Future<void> _fetchEvents() async {
     try {
-      // Query Firestore to get events
       final querySnapshot = await FirebaseFirestore.instance.collection('events').get();
       final Map<DateTime, List<Event>> eventsMap = {};
 
@@ -121,74 +120,72 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
       ),
       body: Column(
         children: [
-          Flexible(
-            flex: 4,
-            child: Container(
-              padding: const EdgeInsets.all(8.0),
-              child: TableCalendar(
-                locale: 'en_US',
-                rowHeight: 43,
-                focusedDay: _focusedDay,
-                selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-                onDaySelected: _onDaySelected,
-                headerStyle: const HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
-                  titleTextStyle: TextStyle(color: Colors.white),
-                  leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
-                  rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+          // Calendar Section
+          Container(
+            padding: const EdgeInsets.all(8.0),
+            child: TableCalendar(
+              locale: 'en_US',
+              rowHeight: 43,
+              focusedDay: _focusedDay,
+              selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+              onDaySelected: _onDaySelected,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
+                titleTextStyle: TextStyle(color: Colors.white),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+              ),
+              calendarStyle: const CalendarStyle(
+                selectedDecoration: BoxDecoration(
+                  color: Color.fromARGB(220, 255, 179, 0),
+                  shape: BoxShape.circle,
                 ),
-                calendarStyle: const CalendarStyle(
-                  selectedDecoration: BoxDecoration(
-                    color: Color.fromARGB(220, 255, 179, 0),
-                    shape: BoxShape.circle,
-                  ),
-                  todayDecoration: BoxDecoration(
-                    color: Color.fromARGB(150, 33, 150, 243),
-                    shape: BoxShape.circle,
-                  ),
-                  todayTextStyle: TextStyle(color: Colors.white),
-                  selectedTextStyle: TextStyle(color: Colors.white),
-                  weekendTextStyle: TextStyle(color: Color.fromARGB(220, 255, 179, 0)),
-                  defaultTextStyle: TextStyle(color: Colors.white),
-                  outsideTextStyle: TextStyle(color: Colors.grey),
+                todayDecoration: BoxDecoration(
+                  color: Color.fromARGB(150, 33, 150, 243),
+                  shape: BoxShape.circle,
                 ),
-                calendarBuilders: CalendarBuilders(
-                  markerBuilder: (context, date, events) {
-                    final normalizedDate = DateTime(date.year, date.month, date.day);
-                    final hasEvents = _events.containsKey(normalizedDate);
+                todayTextStyle: TextStyle(color: Colors.white),
+                selectedTextStyle: TextStyle(color: Colors.white),
+                weekendTextStyle: TextStyle(color: Color.fromARGB(220, 255, 179, 0)),
+                defaultTextStyle: TextStyle(color: Colors.white),
+                outsideTextStyle: TextStyle(color: Colors.grey),
+              ),
+              calendarBuilders: CalendarBuilders(
+                markerBuilder: (context, date, events) {
+                  final normalizedDate = DateTime(date.year, date.month, date.day);
+                  final hasEvents = _events.containsKey(normalizedDate);
 
-                    if (hasEvents) {
-                      return Positioned(
-                        bottom: 1,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            _events[normalizedDate]!.length,
-                            (index) => Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 1),
-                              width: 4,
-                              height: 4,
-                              decoration: const BoxDecoration(
-                                color: Color.fromARGB(220, 255, 179, 0),
-                                shape: BoxShape.circle,
-                              ),
+                  if (hasEvents) {
+                    return Positioned(
+                      bottom: 1,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                          _events[normalizedDate]!.length,
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(
+                              color: Color.fromARGB(220, 255, 179, 0),
+                              shape: BoxShape.circle,
                             ),
                           ),
                         ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                firstDay: DateTime.utc(2010, 10, 16),
-                lastDay: DateTime.utc(2030, 3, 14),
-                availableGestures: AvailableGestures.all,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
+              firstDay: DateTime.utc(2010, 10, 16),
+              lastDay: DateTime.utc(2030, 3, 14),
+              availableGestures: AvailableGestures.all,
             ),
           ),
-          Flexible(
-            flex: 2,
+          // Scrollable Events Section
+          Expanded(
             child: _selectedDayEvents.isNotEmpty
                 ? ListView.builder(
                     itemCount: _selectedDayEvents.length,

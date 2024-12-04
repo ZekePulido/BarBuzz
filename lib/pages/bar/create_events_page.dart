@@ -10,7 +10,6 @@ class CreateEventsPage extends StatefulWidget {
       {super.key, required this.locationId, required this.userId});
 
   @override
-  // ignore: library_private_types_in_public_api
   _CreateEventsPageState createState() => _CreateEventsPageState();
 }
 
@@ -28,6 +27,8 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
   List<String> selectedTags = [];
   final List<String> tagOptions = ['Drinks', 'Food', 'Events'];
 
+  bool isRecurring = false; // Track if the event is recurring
+
   @override
   void dispose() {
     _eventTitleController.dispose();
@@ -37,95 +38,107 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
     super.dispose();
   }
 
- Future<void> _createEvent() async {
-  final title = _eventTitleController.text;
-  final description = _eventDescriptionController.text;
+  Future<void> _createEvent() async {
+    final title = _eventTitleController.text;
+    final description = _eventDescriptionController.text;
 
-  if (_startDateTime == null || _endDateTime == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select valid start and end times')),
-    );
-    return;
-  }
+    if (_startDateTime == null || _endDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select valid start and end times')),
+      );
+      return;
+    }
 
-  final startTime = _startDateTime!.toUtc();
-  final endTime = _endDateTime!.toUtc();
-  final String tag = selectedTags.isNotEmpty ? selectedTags.first : '';
+    final startTime = _startDateTime!;
+    final endTime = _endDateTime!;
+    final String tag = selectedTags.isNotEmpty ? selectedTags.first : '';
 
-  try {
-    // Generate a unique ID for the event
-    String eventId = FirebaseFirestore.instance.collection('events').doc().id;
-
-    // Fetch only the 'location' field from the location document
-    DocumentSnapshot locationSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .collection('location')
-        .doc(widget.locationId)
-        .get();
-
-    if (locationSnapshot.exists) {
-      String locationName =
-          locationSnapshot.get('locationName') ?? 'Unknown Location';
-
-      // Build event data
-      final eventData = {
-        'title': title,
-        'description': description,
-        'startTime': startTime,
-        'endTime': endTime,
-        'locationName': locationName, // Store only the location name
-        'tag': tag,
-        'userId': widget.userId,
-        'locationId': widget.locationId,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      // Add the event under the user's location in Firestore with the specified event ID
-      await FirebaseFirestore.instance
+    try {
+      // Fetch the location name
+      DocumentSnapshot locationSnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.userId)
           .collection('location')
           .doc(widget.locationId)
-          .collection('events')
-          .doc(eventId)
-          .set(eventData);
+          .get();
 
-      // Add the event under the top-level 'locations' collection with the same event ID
-      await FirebaseFirestore.instance
-          .collection('locations')
-          .doc(widget.locationId)
-          .collection('events')
-          .doc(eventId)
-          .set(eventData);
+      if (!locationSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location not found.')),
+        );
+        return;
+      }
 
-      // Also add the event to the top-level 'events' collection with the same event ID
-      await FirebaseFirestore.instance.collection('events').doc(eventId).set(eventData);
+      String locationName =
+          locationSnapshot.get('locationName') ?? 'Unknown Location';
+
+      // Number of weeks to repeat the event (max 3 months = 12 weeks)
+      int maxWeeks = 12;
+      DateTime currentStartTime = startTime;
+      DateTime currentEndTime = endTime;
+
+      for (int i = 0; i < (isRecurring ? maxWeeks : 1); i++) {
+        String eventId =
+            FirebaseFirestore.instance.collection('events').doc().id;
+
+        final eventData = {
+          'title': title,
+          'description': description,
+          'startTime': currentStartTime.toUtc(),
+          'endTime': currentEndTime.toUtc(),
+          'locationName': locationName,
+          'tag': tag,
+          'userId': widget.userId,
+          'locationId': widget.locationId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRecurring': isRecurring,
+        };
+
+        // Save event in multiple collections
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .collection('location')
+            .doc(widget.locationId)
+            .collection('events')
+            .doc(eventId)
+            .set(eventData);
+
+        await FirebaseFirestore.instance
+            .collection('locations')
+            .doc(widget.locationId)
+            .collection('events')
+            .doc(eventId)
+            .set(eventData);
+
+        await FirebaseFirestore.instance
+            .collection('events')
+            .doc(eventId)
+            .set(eventData);
+
+        // Increment the date by 1 week for the next iteration
+        currentStartTime = currentStartTime.add(const Duration(days: 7));
+        currentEndTime = currentEndTime.add(const Duration(days: 7));
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Event created successfully.')),
+        const SnackBar(content: Text('Event(s) created successfully.')),
       );
 
-      // Navigate to the BarProfilePage upon successful event creation
+      // Navigate to BarProfilePage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => const BarProfilePage(),
         ),
       );
-    } else {
+    } catch (e) {
+      print('Error occurred: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Location not found.')),
+        SnackBar(content: Text('Failed to create event: $e')),
       );
     }
-  } catch (e) {
-    print('Error occurred: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to create event: $e')),
-    );
   }
-}
-
 
   Future<void> _selectDateTime(BuildContext context,
       TextEditingController controller, bool isStartTime) async {
@@ -151,10 +164,7 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
           pickedTime.minute,
         );
 
-        final DateTime cstDateTime =
-            fullDateTime.subtract(const Duration(hours: 5));
-
-        controller.text = DateFormat('yyyy-MM-dd HH:mm').format(cstDateTime);
+        controller.text = DateFormat('yyyy-MM-dd HH:mm').format(fullDateTime);
 
         setState(() {
           if (isStartTime) {
@@ -350,7 +360,6 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                           readOnly: true,
                         ),
                         SizedBox(height: screenHeight * 0.02),
-
                         // Tags Selection
                         DropdownButtonFormField<String>(
                           decoration: InputDecoration(
@@ -382,7 +391,25 @@ class _CreateEventsPageState extends State<CreateEventsPage> {
                           }).toList(),
                         ),
                         SizedBox(height: screenHeight * 0.04),
-
+                         // Recurring Event Toggle
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Is this a recurring event?',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Switch(
+                              value: isRecurring,
+                              onChanged: (value) {
+                                setState(() {
+                                  isRecurring = value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
                         // Submit Button
                         Align(
                           alignment: Alignment.center,
