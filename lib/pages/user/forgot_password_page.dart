@@ -1,4 +1,3 @@
-import 'package:barbuzz/pages/user/verify_code_page.dart'; // Remove this if not needed
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
