@@ -1,9 +1,8 @@
-import 'dart:convert';
+import 'package:barbuzz/pages/user/main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // Import the intl package
-import 'package:barbuzz/pages/user/main_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class Event {
   final String title;
@@ -20,40 +19,23 @@ class Event {
     required this.locationName,
   });
 
-  factory Event.fromJson(Map<String, dynamic> json) {
+  factory Event.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return Event(
-      title: json['title'] ?? 'No Title',
-      location: json['location'] ?? 'No Location',
-      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : DateTime.now(),
-      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : DateTime.now(),
-      locationName: json['locationName'] ?? 'No Location Name',
+      title: data['title'] ?? 'No Title',
+      location: data['location'] ?? 'No Location',
+      startTime: (data['startTime'] as Timestamp).toDate(),
+      endTime: (data['endTime'] as Timestamp).toDate(),
+      locationName: data['locationName'] ?? 'No Location Name',
     );
   }
 
   String get formattedStartTime {
-    return DateFormat('h:mm a').format(startTime); // Format to show start time
+    return DateFormat('h:mm a').format(startTime);
   }
 
   String get formattedEndTime {
-    return DateFormat('h:mm a').format(endTime); // Format to show end time
-  }
-}
-
-// API URL (Replace with your actual API URL)
-const String apiUrl = 'http://10.0.2.2:3000/events'; // Adjust URL as needed
-
-Future<List<Event>> fetchEvents() async {
-  try {
-    final response = await http.get(Uri.parse(apiUrl));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = json.decode(response.body)['events'];
-      return jsonResponse.map((eventJson) => Event.fromJson(eventJson)).toList();
-    } else {
-      throw Exception('Failed to load events');
-    }
-  } catch (error) {
-    return [];
+    return DateFormat('h:mm a').format(endTime);
   }
 }
 
@@ -77,11 +59,14 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
 
   Future<void> _fetchEvents() async {
     try {
-      final events = await fetchEvents();
+      // Query Firestore to get events
+      final querySnapshot = await FirebaseFirestore.instance.collection('events').get();
       final Map<DateTime, List<Event>> eventsMap = {};
 
-      for (var event in events) {
+      for (var doc in querySnapshot.docs) {
+        final event = Event.fromFirestore(doc);
         final normalizedDate = DateTime(event.startTime.year, event.startTime.month, event.startTime.day);
+
         if (!eventsMap.containsKey(normalizedDate)) {
           eventsMap[normalizedDate] = [];
         }
@@ -110,7 +95,6 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtain screen size
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
@@ -119,7 +103,7 @@ class _FullCalendarPageState extends State<FullCalendarPage> {
         automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Padding(
-          padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on each side
+          padding: EdgeInsets.only(left: screenWidth * 0.15),
           child: Center(
             child: Image.asset(
               'assets/logos/BarBuzz.png',

@@ -1,50 +1,66 @@
 import 'package:barbuzz/pages/bar/bar_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DeleteEventPage extends StatelessWidget {
   final String eventId;
+  final String locationId;
+  final String userId;
 
-  const DeleteEventPage({super.key, required this.eventId});
+  const DeleteEventPage({
+    super.key,
+    required this.eventId,
+    required this.locationId,
+    required this.userId,
+  });
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+ Future<void> _deleteEvent(BuildContext context) async {
+  try {
+    print('Deleting event with ID: $eventId');
+    print('Location ID: $locationId');
+    print('User ID: $userId');
 
-  Future<void> _deleteEvent(BuildContext context) async {
-    final token = await _storage.read(key: 'auth_token'); // Get the token
+    // Delete from user's nested location-specific events collection
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('location')
+        .doc(locationId)
+        .collection('events')
+        .doc(eventId)
+        .delete();
 
-    try {
-      final response = await http.delete(
-        Uri.parse('http://10.0.2.2:3000/events/$eventId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
+    // Delete from the top-level events collection
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(eventId)
+        .delete();
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Event deleted successfully.')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const BarProfilePage(),
-          ),
-        );
-      } else {
-        final errorData = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['error'])),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete event.')),
-      );
-    }
+    // Delete from the top-level locations collection under location-specific events
+    await FirebaseFirestore.instance
+        .collection('locations')
+        .doc(locationId)
+        .collection('events')
+        .doc(eventId)
+        .delete();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Event deleted successfully')),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BarProfilePage(),
+      ),
+    );
+  } catch (e) {
+    print('Delete failed: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to delete event.')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +79,7 @@ class DeleteEventPage extends StatelessWidget {
         ),
       ),
       body: Container(
-        color: Colors.black, // Set background color here
+        color: Colors.black,
         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -82,11 +98,12 @@ class DeleteEventPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: screenWidth * 0.05,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Use white for better contrast
+                color: Colors.white,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: screenHeight * 0.01),
+
             // Delete Button
             ElevatedButton(
               onPressed: () => _deleteEvent(context),
@@ -109,7 +126,6 @@ class DeleteEventPage extends StatelessWidget {
                 ),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.02),
 
             // Cancel Button

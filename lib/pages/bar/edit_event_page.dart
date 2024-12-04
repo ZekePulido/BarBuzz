@@ -1,13 +1,19 @@
+import 'package:barbuzz/pages/bar/bar_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:intl/intl.dart';
-import 'package:barbuzz/pages/bar/bar_profile_page.dart'; // Adjust based on your project structure
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditEventPage extends StatefulWidget {
   final String eventId;
+  final String locationId;
+  final String userId;
 
-  const EditEventPage({super.key, required this.eventId});
+  const EditEventPage({
+    super.key,
+    required this.eventId,
+    required this.locationId,
+    required this.userId,
+  });
 
   @override
   _EditEventPageState createState() => _EditEventPageState();
@@ -17,7 +23,6 @@ class _EditEventPageState extends State<EditEventPage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  TextEditingController imageController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
 
@@ -38,29 +43,31 @@ class _EditEventPageState extends State<EditEventPage> {
 
   Future<void> _fetchEventDetails() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/events/${widget.eventId}'),
-      );
+      DocumentSnapshot eventDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('location')
+          .doc(widget.locationId)
+          .collection('events')
+          .doc(widget.eventId)
+          .get();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (eventDoc.exists) {
+        Map<String, dynamic>? data = eventDoc.data() as Map<String, dynamic>?;
         setState(() {
-          titleController.text = data['title'] ?? '';
-          descriptionController.text = data['description'] ?? '';
-          imageController.text = data['image'] ?? '';
-          _startDateTime = DateTime.parse(data['startTime']);
-          _endDateTime = DateTime.parse(data['endTime']);
-          _startTimeController.text =
-              DateFormat('MMMM dd, yyyy, h:mm a').format(_startDateTime!);
-          _endTimeController.text =
-              DateFormat('MMMM dd, yyyy, h:mm a').format(_endDateTime!);
+          titleController.text = data?['title'] ?? '';
+          descriptionController.text = data?['description'] ?? '';
+          _startDateTime = (data?['startTime'] as Timestamp).toDate();
+          _endDateTime = (data?['endTime'] as Timestamp).toDate();
+          _startTimeController.text = getFormattedStartTime();
+          _endTimeController.text = getFormattedEndTime();
           _originalStartTime = _startDateTime;
           _originalEndTime = _endDateTime;
-          selectedTag = data['tag'];
+          selectedTag = data?['tag'];
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load event details');
+        throw Exception('Event not found');
       }
     } catch (e) {
       setState(() {
@@ -74,43 +81,52 @@ class _EditEventPageState extends State<EditEventPage> {
 
   Future<void> _submitEventUpdate() async {
     if (_formKey.currentState!.validate()) {
-      // Subtract 5 hours from the updated times if they were modified, otherwise subtract 12 hours if the original times are used.
-      final updatedStartTime = _startDateTime != _originalStartTime
-          ? _startDateTime!
-              .subtract(const Duration(hours: 5))
-              .toUtc()
-              .toIso8601String()
-          : _startDateTime!.toUtc().toIso8601String();
-
-      final updatedEndTime = _endDateTime != _originalEndTime
-          ? _endDateTime!.subtract(const Duration(hours: 5)).toUtc().toIso8601String()
-          : _endDateTime!.toUtc().toIso8601String();
+      final updatedEventData = {
+        'title': titleController.text,
+        'description': descriptionController.text,
+        'startTime': _startDateTime ?? _originalStartTime,
+        'endTime': _endDateTime ?? _originalEndTime,
+        'tag': selectedTag,
+        'userId':  widget.userId,
+        'locationId': widget.locationId
+      };
 
       try {
-        final response = await http.put(
-          Uri.parse('http://10.0.2.2:3000/events/${widget.eventId}'),
-          headers: {'Content-Type': 'application/json; charset=UTF-8'},
-          body: jsonEncode({
-            'title': titleController.text,
-            'description': descriptionController.text,
-            'startTime': updatedStartTime,
-            'endTime': updatedEndTime,
-            'tag': selectedTag,
-          }),
-        );
+        // Update the event in the user's specific location subcollection
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.userId)
+            .collection('location')
+            .doc(widget.locationId)
+            .collection('events')
+            .doc(widget.eventId)
+            .update(updatedEventData);
 
-        if (response.statusCode == 200) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const BarProfilePage(),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to update event.')),
-          );
-        }
+        // Update the event in the top-level 'locations' collection
+        await FirebaseFirestore.instance
+            .collection('locations')
+            .doc(widget.locationId)
+            .collection('events')
+            .doc(widget.eventId)
+            .update(updatedEventData);
+
+        // Also update the event in the top-level 'events' collection
+        await FirebaseFirestore.instance
+            .collection('events')
+            .doc(widget.eventId)
+            .update({
+          ...updatedEventData,
+          'userId': widget.userId,
+          'locationId': widget.locationId,
+        });
+
+        // Navigate back to the BarProfilePage upon successful update
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BarProfilePage(),
+          ),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update event.')),
@@ -123,7 +139,7 @@ class _EditEventPageState extends State<EditEventPage> {
       TextEditingController controller, bool isStartTime) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _startDateTime ?? DateTime.now(),
       firstDate: DateTime(2022),
       lastDate: DateTime(2100),
     );
@@ -135,7 +151,6 @@ class _EditEventPageState extends State<EditEventPage> {
       );
 
       if (pickedTime != null) {
-        // Create a full DateTime object
         final DateTime fullDateTime = DateTime(
           pickedDate.year,
           pickedDate.month,
@@ -144,18 +159,10 @@ class _EditEventPageState extends State<EditEventPage> {
           pickedTime.minute,
         );
 
-        // Adjust to Central Standard Time (CST) by subtracting 5 hours
-        final DateTime cstDateTime = fullDateTime.subtract(const Duration(hours: 5));
-
-        // Store the UTC time in the controller for posting
-        controller.text = DateFormat('yyyy-MM-dd HH:mm').format(cstDateTime);
-
-        // Update the displayed time in the text field using the desired format
         setState(() {
           if (isStartTime) {
-            _startDateTime = fullDateTime; // Store the full date-time object
-            _startTimeController.text =
-                getFormattedStartTime(); // Display formatted time
+            _startDateTime = fullDateTime;
+            _startTimeController.text = getFormattedStartTime();
           } else {
             _endDateTime = fullDateTime;
             _endTimeController.text = getFormattedEndTime();

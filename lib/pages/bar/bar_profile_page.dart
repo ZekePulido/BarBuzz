@@ -1,12 +1,11 @@
-import 'dart:convert';
 import 'package:barbuzz/pages/bar/create_events_page.dart';
 import 'package:barbuzz/pages/bar/delete_event_page.dart';
 import 'package:barbuzz/pages/bar/edit_event_page.dart';
 import 'package:barbuzz/pages/bar/edit_location_page.dart';
 import 'package:barbuzz/pages/user/log_in_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:barbuzz/models/event.dart';
 import 'package:barbuzz/pages/user/event_details_page.dart';
 
@@ -14,7 +13,6 @@ class BarProfilePage extends StatefulWidget {
   const BarProfilePage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _BarProfilePageState createState() => _BarProfilePageState();
 }
 
@@ -26,7 +24,8 @@ class _BarProfilePageState extends State<BarProfilePage> {
   String locationId = "";
   Future<List<Event>>? _events;
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -35,41 +34,64 @@ class _BarProfilePageState extends State<BarProfilePage> {
   }
 
   Future<void> _fetchBarProfile() async {
-    final token = await _storage.read(key: 'auth_token');
+    User? currentUser = _auth.currentUser;
 
-    try {
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/bar-profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
+    if (currentUser != null) {
+      try {
+        // Fetch the user document
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(currentUser.uid).get();
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          venueName = data['venueName'];
-          venueAddress = data['venueAddress'];
-          venueDescription = data['venueDescription'];
-          locationId = data['locationId'];
-        });
+        if (userDoc.exists) {
+          Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
 
-        print(token);
+          setState(() {
+            venueName = data?['venueName'] ?? 'Unknown Venue';
+            venueAddress = data?['venueAddress'] ?? 'Unknown Address';
+            venueDescription = data?['venueDescription'] ?? 'No Description';
+          });
 
-        // Fetch upcoming events after profile data is fetched
-        _events = fetchEventsForLocation(locationId); // Pass locationId properly
-      } else {
-        // Handle error response
-        final errorData = jsonDecode(response.body);
+          // Fetch the location subcollection and get the first location document's ID
+          QuerySnapshot locationSnapshot = await _firestore
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('location')
+              .limit(1) // Assuming there's only one location document for the user
+              .get();
+
+          if (locationSnapshot.docs.isNotEmpty) {
+            DocumentSnapshot locationDoc = locationSnapshot.docs.first;
+            setState(() {
+              locationId = locationDoc.id; // Get the location document ID
+            });
+
+            // Only fetch events if locationId is not empty
+            if (locationId.isNotEmpty) {
+              _events = fetchEventsForLocation(currentUser.uid, locationId);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Location ID is missing. Cannot load events.')),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No location found for this user.')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile not found.')),
+          );
+        }
+      } catch (e, stackTrace) {
+        print("Error loading profile: $e");
+        print(stackTrace);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['error'])),
+          SnackBar(content: Text('Failed to load profile: $e')),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load profile.')),
-      );
+    } else {
+      _logout();
     }
   }
 
@@ -77,30 +99,34 @@ class _BarProfilePageState extends State<BarProfilePage> {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
-
     return date.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
         date.isBefore(endOfWeek.add(const Duration(days: 1)));
   }
 
-  Future<List<Event>> fetchEventsForLocation(String locationId) async {
-    final response = await http
-        .get(Uri.parse('http://10.0.2.2:3000/locations/$locationId/events'));
+  Future<List<Event>> fetchEventsForLocation(String userId, String locationId) async {
+    if (locationId.isEmpty) {
+      throw Exception('Location ID is empty. Cannot fetch events.');
+    }
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<dynamic> eventsJson = data['events'];
-      final events = eventsJson.map((json) => Event.fromJson(json)).toList();
+    try {
+      QuerySnapshot eventsSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('location')
+          .doc(locationId)
+          .collection('events')
+          .get();
+
+      final events = eventsSnapshot.docs.map((doc) => Event.fromFirestore(doc)).toList();
 
       // Filter events for the current week
-      final currentWeekEvents = events
-          .where((event) =>
-              isDateInCurrentWeek(event.startTime) ||
-              isDateInCurrentWeek(event.endTime))
-          .toList();
+      final currentWeekEvents = events.where((event) =>
+          isDateInCurrentWeek(event.startTime) ||
+          isDateInCurrentWeek(event.endTime)).toList();
 
       return currentWeekEvents;
-    } else {
-      throw Exception('Failed to load events');
+    } catch (e) {
+      throw Exception('Failed to load events: $e');
     }
   }
 
@@ -154,7 +180,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: EdgeInsets.all(screenWidth * 0.05),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +244,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              CreateEventsPage(locationId: locationId),
+                              CreateEventsPage(locationId: locationId, userId: _auth.currentUser!.uid),
                         ),
                       );
                     },
@@ -277,92 +303,97 @@ class _BarProfilePageState extends State<BarProfilePage> {
                 ),
               ],
             ),
-            SizedBox(height: screenHeight * 0.04),
-            // Display the list of upcoming events
-            FutureBuilder<List<Event>>(
-              future: _events,
-              builder: (context, eventsSnapshot) {
-                if (eventsSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (eventsSnapshot.hasError) {
-                  return Center(child: Text('Error: ${eventsSnapshot.error}'));
-                } else if (!eventsSnapshot.hasData ||
-                    eventsSnapshot.data!.isEmpty) {
-                  return const Center(child: Text('No upcoming events.'));
-                } else {
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: eventsSnapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final event = eventsSnapshot.data![index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  EventDetailsPage(event: event),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          color: Colors.white24,
-                          child: ListTile(
-                            title: Text(
-                              event.title,
-                              style: TextStyle(
-                                color: _textColor,
-                                fontSize: screenWidth * 0.04,
+            SizedBox(height: screenHeight * 0.02),
+            Expanded(
+              child: FutureBuilder<List<Event>>(
+                future: _events,
+                builder: (context, eventsSnapshot) {
+                  if (eventsSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (eventsSnapshot.hasError) {
+                    return Center(child: Text('Error: ${eventsSnapshot.error}'));
+                  } else if (!eventsSnapshot.hasData || eventsSnapshot.data!.isEmpty) {
+                    return const Center(child: Text('No upcoming events.'));
+                  } else {
+                    return ListView.builder(
+                      itemCount: eventsSnapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final event = eventsSnapshot.data![index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditEventPage(
+                                  eventId: event.eventId,
+                                  locationId: locationId,
+                                  userId: _auth.currentUser!.uid,
+                                ),
                               ),
-                            ),
-                            subtitle: Text(
-                              '${event.getFormattedStartTime()} - ${event.getFormattedEndTime()}',
-                              style: TextStyle(
-                                color: _textColor,
-                                fontSize: screenWidth * 0.035,
+                            );
+                          },
+                          child: Card(
+                            color: Colors.white24,
+                            child: ListTile(
+                              title: Text(
+                                event.title,
+                                style: TextStyle(
+                                  color: _textColor,
+                                  fontSize: screenWidth * 0.04,
+                                ),
                               ),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: _textColor),
-                                  onPressed: () {
-                                    if (event.eventId.isNotEmpty) {
+                              subtitle: Text(
+                                '${event.getFormattedStartTime()} - ${event.getFormattedEndTime()}',
+                                style: TextStyle(
+                                  color: _textColor,
+                                  fontSize: screenWidth * 0.035,
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: _textColor),
+                                    onPressed: () {
+                                      if (event.eventId.isNotEmpty) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditEventPage(
+                                              eventId: event.eventId,
+                                              locationId: locationId,
+                                              userId: _auth.currentUser!.uid,
+                                            ),
+                                          ),
+                                        );
+                                      } 
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: _textColor),
+                                    onPressed: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => EditEventPage(
+                                          builder: (context) => DeleteEventPage(
                                             eventId: event.eventId,
+                                            locationId: locationId,
+                                            userId: _auth.currentUser!.uid,
                                           ),
                                         ),
                                       );
-                                    } 
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: _textColor),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DeleteEventPage(
-                                          eventId: event.eventId,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                }
-              },
+                        );
+                      },
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),
@@ -371,7 +402,7 @@ class _BarProfilePageState extends State<BarProfilePage> {
   }
 
   Future<void> _logout() async {
-    await _storage.delete(key: 'auth_token');
+    await _auth.signOut();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),

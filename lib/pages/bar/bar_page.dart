@@ -1,9 +1,9 @@
-import 'dart:convert';
-import 'package:barbuzz/pages/user/event_details_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import '../user/event_details_page.dart';
 import '../user/main_page.dart';
+import 'package:barbuzz/utils/event_card.dart';
 import 'package:barbuzz/models/event.dart';
 
 class BarPage extends StatefulWidget {
@@ -23,112 +23,103 @@ class BarPage extends StatefulWidget {
 }
 
 class _BarPageState extends State<BarPage> {
-  late Future<Map<String, dynamic>> _locationDetails;
+  late Future<DocumentSnapshot<Map<String, dynamic>>> _locationDetails;
   late Future<List<Event>> _events;
   bool _isFavorited = false;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
     _locationDetails = fetchLocationDetails(widget.locationId);
     _events = fetchEventsForLocation(widget.locationId);
-    _checkFavoriteStatus();
+
+    final user = FirebaseAuth.instance.currentUser;
+     if (user != null) {
+      _loadFavoriteStatus();
+    }
   }
 
-  Future<Map<String, dynamic>> fetchLocationDetails(String locationId) async {
-    final response =
-        await http.get(Uri.parse('http://10.0.2.2:3000/locations/$locationId'));
+  Future<DocumentSnapshot<Map<String, dynamic>>> fetchLocationDetails(String locationId) async {
+    return FirebaseFirestore.instance.collection('locations').doc(locationId).get();
+  }
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load location details');
+  Future<void> _loadFavoriteStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User is not logged in');
     }
+
+    final userId = user.uid;
+    final favoriteDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('favorites')
+        .doc(widget.locationId)
+        .get();
+
+    setState(() {
+      _isFavorited = favoriteDoc.exists;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('User is not logged in');
+    }
+
+    final userId = user.uid;
+    final favoritesCollection = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('favorites');
+
+    if (_isFavorited) {
+      // Remove from favorites
+      await favoritesCollection.doc(widget.locationId).delete();
+    } else {
+      // Add to favorites
+      await favoritesCollection.doc(widget.locationId).set({
+        'locationName': widget.locationName,
+        'imagePath': widget.imagePath,
+      });
+    }
+
+    setState(() {
+      _isFavorited = !_isFavorited;
+    });
   }
 
   bool isDateInCurrentWeek(DateTime date) {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
-
     return date.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
         date.isBefore(endOfWeek.add(const Duration(days: 1)));
   }
 
   Future<List<Event>> fetchEventsForLocation(String locationId) async {
-    final response = await http
-        .get(Uri.parse('http://10.0.2.2:3000/locations/$locationId/events'));
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('locations')
+        .doc(locationId)
+        .collection('events')
+        .get();
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<dynamic> eventsJson = data['events'];
-      final events = eventsJson.map((json) => Event.fromJson(json)).toList();
-
-      // Filter events for the current week
-      final currentWeekEvents = events
-          .where((event) =>
-              isDateInCurrentWeek(event.startTime) ||
-              isDateInCurrentWeek(event.endTime))
-          .toList();
-
-      return currentWeekEvents;
-    } else {
-      throw Exception('Failed to load events');
-    }
-  }
-
-  Future<void> _checkFavoriteStatus() async {
-    try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token == null) return;
-
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/favorites'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _isFavorited =
-              data['favorites'].any((fav) => fav['_id'] == widget.locationId);
-        });
-      }
-    } catch (e) {
-      // Handle errors here
-    }
-  }
-
-  Future<void> _toggleFavorite() async {
-    try {
-      final token = await _storage.read(key: 'auth_token');
-      if (token == null) return;
-
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/favorites'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'locationId': widget.locationId}),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _isFavorited = !_isFavorited;
-        });
-      }
-    } catch (e) {
-      // Handle errors here
-    }
+    return querySnapshot.docs
+        .map((doc) => Event.fromFirestore(doc))
+        .where((event) =>
+            isDateInCurrentWeek(event.startTime) ||
+            isDateInCurrentWeek(event.endTime))
+        .toList();
   }
 
   @override
+   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -142,31 +133,32 @@ class _BarPageState extends State<BarPage> {
             ),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isFavorited ? Icons.favorite : Icons.favorite_border,
-              color: _isFavorited ? Colors.red : Colors.white,
-            ),
-            onPressed: _toggleFavorite,
-          ),
-        ],
+        actions: user != null
+            ? [
+                IconButton(
+                  icon: Icon(
+                    _isFavorited ? Icons.favorite : Icons.favorite_border,
+                    color: _isFavorited ? Colors.red : Colors.white,
+                  ),
+                  onPressed: _toggleFavorite,
+                ),
+              ]
+            : null, // If the user is not logged in, no actions
       ),
       backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<Map<String, dynamic>>(
+        child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           future: _locationDetails,
           builder: (context, locationSnapshot) {
             if (locationSnapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             } else if (locationSnapshot.hasError) {
               return Center(child: Text('Error: ${locationSnapshot.error}'));
-            } else if (!locationSnapshot.hasData ||
-                locationSnapshot.data!.isEmpty) {
+            } else if (!locationSnapshot.hasData || !locationSnapshot.data!.exists) {
               return const Center(child: Text('No details available.'));
             } else {
-              final location = locationSnapshot.data!;
+              final location = locationSnapshot.data!.data()!;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -174,17 +166,14 @@ class _BarPageState extends State<BarPage> {
                     children: [
                       ClipOval(
                         child: FadeInImage(
-                          placeholder: const AssetImage(
-                              'assets/logos/BarBee.png'), // Placeholder image
+                          placeholder: const AssetImage('assets/logos/BarBee.png'),
                           image: widget.imagePath.isNotEmpty
-                              ? NetworkImage(widget.imagePath) // Main image
-                              : const AssetImage(
-                                  'assets/logos/BarBee.png'), // Fallback image
+                              ? NetworkImage(widget.imagePath)
+                              : const AssetImage('assets/logos/BarBee.png'),
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
                           imageErrorBuilder: (context, error, stackTrace) {
-                            // Fallback in case the image fails to load
                             return Image.asset(
                               'assets/logos/BarBee.png',
                               width: 120,
@@ -200,23 +189,18 @@ class _BarPageState extends State<BarPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.locationName.isNotEmpty
-                                  ? widget.locationName
-                                  : 'Unknown Location',
-                              style: const TextStyle(
-                                  fontSize: 24, color: Colors.white),
+                              widget.locationName.isNotEmpty ? widget.locationName : 'Unknown Location',
+                              style: const TextStyle(fontSize: 24, color: Colors.white),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               "Address: ${location['address'] ?? 'No address provided'}",
-                              style: const TextStyle(
-                                  fontSize: 18, color: Colors.white),
+                              style: const TextStyle(fontSize: 18, color: Colors.white),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               "Description: ${location['description'] ?? 'No description provided'}",
-                              style: const TextStyle(
-                                  fontSize: 18, color: Colors.white),
+                              style: const TextStyle(fontSize: 18, color: Colors.white),
                             ),
                           ],
                         ),
@@ -224,51 +208,45 @@ class _BarPageState extends State<BarPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  FutureBuilder<List<Event>>(
-                    future: _events,
-                    builder: (context, eventsSnapshot) {
-                      if (eventsSnapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (eventsSnapshot.hasError) {
-                        return Center(
-                            child: Text('Error: ${eventsSnapshot.error}'));
-                      } else if (!eventsSnapshot.hasData ||
-                          eventsSnapshot.data!.isEmpty) {
-                        return const Center(
-                            child: Text('No events available.'));
-                      } else {
-                        final events = eventsSnapshot.data!;
-                        return Expanded(
-                          child: ListView.builder(
+                  Expanded(
+                    child: FutureBuilder<List<Event>>(
+                      future: _events,
+                      builder: (context, eventsSnapshot) {
+                        if (eventsSnapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (eventsSnapshot.hasError) {
+                          return Center(child: Text('Error: ${eventsSnapshot.error}'));
+                        } else if (!eventsSnapshot.hasData || eventsSnapshot.data!.isEmpty) {
+                          return const Center(child: Text('No events available.'));
+                        } else {
+                          final events = eventsSnapshot.data!;
+                          return ListView.builder(
                             itemCount: events.length,
                             itemBuilder: (context, index) {
                               final event = events[index];
-                              return ListTile(
-                                title: Text(
-                                  event.title,
-                                  style: const TextStyle(color: Colors.white),
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: EventCard(
+                                  title: event.title,
+                                  startTime: event.getFormattedStartTime(),
+                                  endTime: event.getFormattedEndTime(),
+                                  description: event.description,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EventDetailsPage(event: event),
+                                      ),
+                                    );
+                                  },
                                 ),
-                                subtitle: Text(
-                                  '${event.getFormattedStartTime()} - ${event.getFormattedEndTime()}',
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          EventDetailsPage(event: event),
-                                    ),
-                                  );
-                                },
                               );
                             },
-                          ),
-                        );
-                      }
-                    },
-                  )
+                          );
+                        }
+                      },
+                    ),
+                  ),
                 ],
               );
             }

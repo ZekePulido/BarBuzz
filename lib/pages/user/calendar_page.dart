@@ -1,63 +1,37 @@
-import 'dart:convert';
 import 'package:barbuzz/pages/user/full_calendar_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // Import the intl package
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class Event {
   final String title;
-  final String locationName; // Use locationName instead of location
+  final String locationName;
   final DateTime startTime;
   final DateTime endTime;
 
   Event({
     required this.title,
-    required this.locationName, // Update to use locationName
+    required this.locationName,
     required this.startTime,
     required this.endTime,
   });
 
-  factory Event.fromJson(Map<String, dynamic> json) {
+  factory Event.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return Event(
-      title: json['title'] ?? 'No Title',
-      locationName: json['locationName'] ?? 'No Location', // Update to use locationName
-      startTime: json['startTime'] != null
-          ? DateTime.parse(json['startTime'])
-          : DateTime.now(),
-      endTime: json['endTime'] != null
-          ? DateTime.parse(json['endTime'])
-          : DateTime.now(),
+      title: data['title'] ?? 'No Title',
+      locationName: data['locationName'] ?? 'No Location',
+      startTime: (data['startTime'] as Timestamp).toDate(),
+      endTime: (data['endTime'] as Timestamp).toDate(),
     );
   }
 
   String get formattedStartTime {
-    return DateFormat('h:mm a').format(startTime); // Format to show time only
+    return DateFormat('h:mm a').format(startTime);
   }
 
   String get formattedEndTime {
-    return DateFormat('h:mm a').format(endTime); // Format to show time only
-  }
-}
-
-const String apiUrl = 'http://10.0.2.2:3000/events'; // Adjust URL as needed
-
-Future<List<Event>> fetchEvents({String? tag}) async {
-  try {
-    final uri = tag == null 
-      ? Uri.parse(apiUrl)
-      : Uri.parse('$apiUrl/tag/$tag'); // Use the tag endpoint
-
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      final eventsJsonList = jsonResponse['events'] as List<dynamic>;
-      return eventsJsonList.map((eventJson) => Event.fromJson(eventJson)).toList();
-    } else {
-      throw Exception('Failed to load events');
-    }
-  } catch (error) {
-    return [];
+    return DateFormat('h:mm a').format(endTime);
   }
 }
 
@@ -65,13 +39,11 @@ class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _CalendarPageState createState() => _CalendarPageState();
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  String _selectedTag = 'All'; // Default tag
-
+  String _selectedTag = 'All';
   List<Event> _todayEvents = [];
   List<Event> _tomorrowEvents = [];
 
@@ -83,7 +55,16 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> _fetchAndSetEvents({String? tag}) async {
     try {
-      final events = await fetchEvents(tag: tag);
+      // Firestore query to get events
+      Query eventsQuery = FirebaseFirestore.instance.collection('events');
+
+      // Apply tag filter if a specific tag is selected
+      if (tag != null && tag != 'All') {
+        eventsQuery = eventsQuery.where('tag', isEqualTo: tag);
+      }
+
+      final querySnapshot = await eventsQuery.get();
+      final events = querySnapshot.docs.map((doc) => Event.fromFirestore(doc)).toList();
 
       final today = DateTime.now();
       final tomorrow = DateTime.now().add(const Duration(days: 1));
@@ -107,7 +88,7 @@ class _CalendarPageState extends State<CalendarPage> {
   void _onTagSelected(String tag) {
     setState(() {
       _selectedTag = tag;
-      _fetchAndSetEvents(tag: tag == 'All' ? null : tag); // Pass null for "All" to fetch all events
+      _fetchAndSetEvents(tag: tag == 'All' ? null : tag);
     });
   }
 
@@ -121,7 +102,7 @@ class _CalendarPageState extends State<CalendarPage> {
         automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(220, 255, 179, 0),
         title: Padding(
-          padding: EdgeInsets.only(left: screenWidth * 0.15), // 15% padding on the left
+          padding: EdgeInsets.only(left: screenWidth * 0.15),
           child: Center(
             child: Image.asset(
               'assets/logos/BarBuzz.png',
@@ -148,7 +129,7 @@ class _CalendarPageState extends State<CalendarPage> {
           // Navigation bar below the AppBar
           Container(
             color: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 8), // Add vertical padding
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -249,20 +230,20 @@ class _CalendarPageState extends State<CalendarPage> {
     return GestureDetector(
       onTap: () => _onTagSelected(tag),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add padding for better touch area
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.yellow.withOpacity(0.2) : Colors.transparent, // Highlight background
-          borderRadius: BorderRadius.circular(8), // Rounded corners for the highlight
+          color: isSelected ? Colors.yellow.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? Colors.yellow : Colors.grey), // Highlight icon
-            const SizedBox(height: 4), // Add spacing between icon and label
+            Icon(icon, color: isSelected ? Colors.yellow : Colors.grey),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.yellow : Colors.grey, // Highlight label
+                color: isSelected ? Colors.yellow : Colors.grey,
               ),
             ),
           ],
